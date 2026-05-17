@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Launcher Dashboard</title>
+
+  <!-- FONT -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- ICON -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+
+  <style>
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+      font-family:'Poppins',sans-serif;
+    }
+
+    body{
+      min-height:100vh;
+      background:
+        radial-gradient(circle at top left,#6a5cff 0%,transparent 30%),
+        radial-gradient(circle at bottom right,#00d2ff 0%,transparent 30%),
+        #0b1020;
+      overflow-x:hidden;
+      color:white;
+      padding:40px 20px;
+    }
+
+    .container{
+      max-width:1200px;
+      margin:auto;
+    }
+
+    .header{
+      text-align:center;
+      margin-bottom:50px;
+      animation:fadeDown .8s ease;
+    }
+
+    .header h1{
+      font-size:clamp(2rem,5vw,4rem);
+      font-weight:700;
+      background:linear-gradient(90deg,#fff,#8be9fd);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      margin-bottom:10px;
+    }
+
+    .header p{
+      color:rgba(255,255,255,.7);
+      font-size:1rem;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+      gap:25px;
+    }
+
+    .card{
+      position:relative;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.1);
+      border-radius:24px;
+      padding:28px;
+      cursor:pointer;
+      overflow:hidden;
+      backdrop-filter:blur(18px);
+      transition:.35s ease;
+      animation:fadeUp .8s ease;
+
+      /* TAMBAHAN */
+      text-align:center;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+    }
+
+    .card::before{
+      content:'';
+      position:absolute;
+      inset:0;
+      background:linear-gradient(
+        135deg,
+        rgba(255,255,255,.12),
+        transparent
+      );
+      opacity:0;
+      transition:.35s ease;
+    }
+
+    .card:hover{
+      transform:translateY(-10px) scale(1.02);
+      border-color:rgba(255,255,255,.3);
+      box-shadow:
+        0 20px 40px rgba(0,0,0,.4),
+        0 0 30px rgba(138,180,255,.25);
+    }
+
+    .card:hover::before{
+      opacity:1;
+    }
+
+    /* ICON */
+
+    .icon{
+      width:72px;
+      height:72px;
+      border-radius:22px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:2rem;
+      margin-bottom:20px;
+      position:relative;
+      overflow:hidden;
+      transition:.35s ease;
+      box-shadow:
+        0 10px 25px rgba(0,0,0,.35),
+        inset 0 0 15px rgba(255,255,255,.12);
+    }
+
+    .card:hover .icon{
+      transform:rotate(-5deg) scale(1.08);
+    }
+
+    .icon::after{
+      content:'';
+      position:absolute;
+      width:140%;
+      height:140%;
+      background:linear-gradient(
+        120deg,
+        transparent,
+        rgba(255,255,255,.25),
+        transparent
+      );
+      transform:rotate(25deg);
+      left:-150%;
+      transition:.7s;
+    }
+
+    .card:hover .icon::after{
+      left:150%;
+    }
+
+    .icon i{
+      z-index:2;
+      color:white;
+    }
+
+    /* WARNA TIAP ICON */
+
+    .excel{
+      background:linear-gradient(135deg,#00b09b,#96c93d);
+    }
+
+    .map{
+      background:linear-gradient(135deg,#ff9966,#ff5e62);
+    }
+
+    .reject{
+      background:linear-gradient(135deg,#ff416c,#ff4b2b);
+    }
+
+    .barcode{
+      background:linear-gradient(135deg,#4776E6,#8E54E9);
+    }
+
+    .search{
+      background:linear-gradient(135deg,#11998e,#38ef7d);
+    }
+
+    .warning{
+      background:linear-gradient(135deg,#f7971e,#ffd200);
+    }
+
+    .split{
+      background:linear-gradient(135deg,#396afc,#2948ff);
+    }
+
+    .compare{
+      background:linear-gradient(135deg,#8E2DE2,#4A00E0);
+    }
+
+    .title{
+      font-size:1.2rem;
+      font-weight:600;
+      margin-bottom:10px;
+      line-height:1.4;
+
+      /* TAMBAHAN */
+      text-align:center;
+      width:100%;
+    }
+
+    .desc{
+      font-size:.95rem;
+      color:rgba(255,255,255,.7);
+      line-height:1.6;
+      text-align:center;
+    }
+
+    .open-btn{
+      margin-top:20px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      color:#8be9fd;
+      font-weight:500;
+      transition:.3s;
+    }
+
+    .card:hover .open-btn{
+      transform:translateX(5px);
+    }
+
+    .floating{
+      position:fixed;
+      width:250px;
+      height:250px;
+      border-radius:50%;
+      filter:blur(80px);
+      opacity:.2;
+      z-index:-1;
+    }
+
+    .f1{
+      background:#6a5cff;
+      top:-80px;
+      left:-80px;
+    }
+
+    .f2{
+      background:#00d2ff;
+      bottom:-80px;
+      right:-80px;
+    }
+
+    @keyframes fadeUp{
+      from{
+        opacity:0;
+        transform:translateY(30px);
+      }
+      to{
+        opacity:1;
+        transform:translateY(0);
+      }
+    }
+
+    @keyframes fadeDown{
+      from{
+        opacity:0;
+        transform:translateY(-30px);
+      }
+      to{
+        opacity:1;
+        transform:translateY(0);
+      }
+    }
+
+    @media(max-width:768px){
+
+      body{
+        padding:25px 15px;
+      }
+
+      .card{
+        padding:22px;
+      }
+
+      .icon{
+        width:62px;
+        height:62px;
+        font-size:1.7rem;
+      }
+
+    }
+  </style>
+</head>
+<body>
+
+  <div class="floating f1"></div>
+  <div class="floating f2"></div>
+
+  <div class="container">
+
+    <div class="header">
+      <h1>My Applications</h1>
+    </div>
+
+    <div class="grid">
+
+      <!-- Spreadsheet -->
+      <div class="card" onclick="openApp('drive.html')">
+        <div class="icon excel">
+          <i class="fa-solid fa-file-excel"></i>
+        </div>
+
+        <div class="title">Spreadsheet</div>
+
+        <div class="desc">
+          Aplikasi ini di gunakan untuk mengambil data kantong awal pengajuan dan sebagai database pengajuan
+        </div>
+
+        <div class="open-btn"></div>
+      </div>
+	  
+	   <!-- HSCODE -->
+      <div class="card" onclick="openApp('index - hscode.html')">
+
+        <div class="icon barcode">
+          <i class="fa-solid fa-barcode"></i>
+        </div>
+
+        <div class="title">HSCODE</div>
+
+        <div class="desc">
+          Aplikasi ini di gunakan untuk mencari HASCODE dari file pengajuan ke BC ( AMBIL FILE URIAN SAJA DARI FILE PENGAJUAN KE BC )
+        </div>
+
+        <div class="open-btn"></div>
+      </div>
+
+      <!-- Mapping -->
+      <div class="card" onclick="openApp('mapping.html')">
+
+        <div class="icon map">
+          <i class="fa-solid fa-map-location-dot"></i>
+        </div>
+
+        <div class="title">Mapping 1</div>
+
+        <div class="desc">
+          Aplikasi ini di gunakan untuk TRCAKING KOTA ASAL DAN STATUS DENGAN METODE 5 KOTA SEKLIGUS AGAR SAMA PERSIS URUTAN TRCAKING FILE RESI ( hasil download Upload Tabel Hasil Tracking lalu Upload Tabel Resi.xlsx )
+        </div>
+
+        <div class="open-btn"></div>
+      </div>
+
+      <!-- Mapping 2 -->
+      <div class="card" onclick="openApp('mapping 2.html')">
+
+        <div class="icon map">
+          <i class="fa-solid fa-map-location-dot"></i>
+        </div>
+
+        <div class="title">mapping 2</div>
+
+        <div class="desc">
+          Aplikasi ini di gunakan untuk TRCAKING KOTA ASAL DAN STATUS YANG TIDAK DI TEMUKAN ( upload File asli / data utama yaitu FILE RESI di tabel A dan upload file hasil tracking ke tabel B )
+        </div>
+
+        <div class="open-btn"></div>
+      </div>
+	  
+	  <!-- Reject BC -->
+      <div class="card" onclick="openApp('TOLAK BC RESI.html')">
+
+        <div class="icon warning">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+
+        <div class="title">
+          DATA AWB/RESI/CN REJECT BEA CUKAI
+        </div>
+
+       <div class="desc">
+          Aplikasi ini untuk menghasilkan file fix dan file riject dari upprove pengajuan. ( AMBIL FILE RETUR FULL DARI PENGAJUAN DAN AMBIL RESI/CN YANG DI TOLAK DI FILE UPPROVE)
+        </div>
+
+        <div class="open-btn"></div>
+      </div>
+	  
+	  <!-- Split -->
+      <div class="card" onclick="openApp('SPLIT SPX.html')">
+
+        <div class="icon split">
+          <i class="fa-solid fa-code-branch"></i>
+        </div>
+
+        <div class="title">
+          SPLIT FILE TO AKI
+        </div>
+
+        <div class="desc">
+          Aplikasi ini di gunakan untuk memisahkan jumlah file yang akan di upload ke AKI /CAESA ( AMBIL FILE RETUR FIX DARI PENGAJUAN )
+        </div>
+
+        <div class="open-btn"></div>
+      </div>
+	  
+	  <!-- Cek Kantong -->
+      <div class="card" onclick="openApp('CEK NO KANTONG DI TOLAK BC.html')">
+
+        <div class="icon search">
+          <i class="fa-solid fa-magnifying-glass-chart"></i>
+        </div>
+
+        <div class="title">
+          CEK NO KANTONG DI TOLAK BC
+        </div>
+
+         <div class="desc">
+          Aplikasi ini di gunakan untuk USER WIN 1 mencari kantong yang di tolak BC ( AMBIL PENGAJUAN WIN 1 & 2, LALU AMBIL KANTONG YANG DI TOLAK DI FILE UPPROVE )
+        </div>
+
+        <div class="open-btn"></div>
+      </div>
+
+      <!-- Reject -->
+      <div class="card" onclick="openApp('laporan resi tolak bc.html')">
+
+        <div class="icon reject">
+          <i class="fa-solid fa-ban"></i>
+        </div>
+
+        <div class="title">
+          JUMLAH RESI/CN REJECT DALAM SATU KANTONG
+        </div>
+
+        <div class="desc">
+          Aplikasi ini di gunakan untuk mencari Jumlah resi / cn yang di tolak BC dalam satu kantong. ( AMBIL FILE DARI DATA REJECT PENGAJUAN )
+        </div>
+
+        <div class="open-btn"></div>
+      </div>
+    
+      <!-- Selisih -->
+      <div class="card" onclick="openApp('GABUNG SELISIH CN DALAM 1 KANTONG.html')">
+
+        <div class="icon compare">
+          <i class="fa-solid fa-scale-balanced"></i>
+        </div>
+
+        <div class="title">
+          SELISIH RESI / CN DALAM SATU KANTONG
+        </div>
+
+        <div class="desc">
+          Aplikasi ini Kegunaannya untuk USER WIN 4, Spreadsheet ke AKI, dan mencari Data selisih Resi / CN dalam satu kantong yang di fix dan reject ( AMBIL CN / RESI AWAL DI SPREADSHEET DAN FILE LAPORAN_CN_DITOLAK DI PENGAJUAN LALU JADIKAN SATU FILE EXCEL BERI NAMA " SELISIH KANTONG DAN CN " KEMUDIAN DROP KE APLIKASI )
+        </div>
+
+        <div class="open-btn"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    function openApp(page) {
+      window.location.href = page;
+    }
+	
+	/* ===== ANTI INSPECT ===== */
+
+document.addEventListener('contextmenu', function(e){
+    e.preventDefault();
+});
+
+document.onkeydown = function(e){
+
+    // F12
+    if(e.keyCode == 123){
+        return false;
+    }
+
+    // CTRL + SHIFT + I
+    if(e.ctrlKey && e.shiftKey && e.keyCode == 73){
+        return false;
+    }
+
+    // CTRL + SHIFT + J
+    if(e.ctrlKey && e.shiftKey && e.keyCode == 74){
+        return false;
+    }
+
+    // CTRL + U
+    if(e.ctrlKey && e.keyCode == 85){
+        return false;
+    }
+
+    // CTRL + SHIFT + C
+    if(e.ctrlKey && e.shiftKey && e.keyCode == 67){
+        return false;
+    }
+
+};
+
+
+document.onselectstart = function(e){
+
+    if(e.target.closest("#listKantong")){
+        return true;
+    }
+
+    return false;
+};
+
+
+(function(){
+
+function detectDevTools(){
+
+    const start = new Date();
+
+    debugger;
+
+    const end = new Date();
+
+    if(end - start > 100){
+
+        document.body.innerHTML =
+        "<h1 style='color:red;text-align:center;margin-top:100px;'>SECURITY BLOCKED</h1>";
+
+    }
+
+}
+
+setInterval(detectDevTools,1000);
+
+})();
+
+// ===== KLIK NOMOR KANTONG AUTO COPY =====
+document.addEventListener("click", function(e){
+
+    if(e.target.tagName === "TD" && e.target.parentElement.parentElement.id === "listKantong"){
+
+        var teks = e.target.innerText;
+
+        navigator.clipboard.writeText(teks).then(function(){
+
+            // efek notifikasi kecil
+            e.target.style.background = "#00c896";
+
+            setTimeout(function(){
+                e.target.style.background = "";
+            },500);
+
+        });
+
+    }
+
+});
+
+	
+  </script>
+
+</body>
+</html>

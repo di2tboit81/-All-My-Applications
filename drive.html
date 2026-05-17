@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Open Spreadsheet</title>
+
+  <style>
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body{
+      height:100vh;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      background: linear-gradient(135deg, #0f172a, #1e293b, #334155);
+      overflow:hidden;
+    }
+
+    .glow{
+      position:absolute;
+      width:500px;
+      height:500px;
+      background:rgba(59,130,246,0.25);
+      filter:blur(120px);
+      border-radius:50%;
+      animation:float 6s ease-in-out infinite alternate;
+    }
+
+    @keyframes float{
+      from{
+        transform:translate(-100px,-50px);
+      }
+      to{
+        transform:translate(100px,50px);
+      }
+    }
+
+    .card{
+      position:relative;
+      z-index:2;
+      background:rgba(255,255,255,0.08);
+      border:1px solid rgba(255,255,255,0.15);
+      backdrop-filter:blur(12px);
+      padding:50px 40px;
+      border-radius:24px;
+      text-align:center;
+      box-shadow:0 10px 40px rgba(0,0,0,0.35);
+      width:350px;
+      animation:fadeIn 1s ease;
+    }
+
+    @keyframes fadeIn{
+      from{
+        opacity:0;
+        transform:translateY(30px);
+      }
+      to{
+        opacity:1;
+        transform:translateY(0);
+      }
+    }
+
+    .card h1{
+      color:white;
+      margin-bottom:15px;
+      font-size:30px;
+    }
+
+    .card p{
+      color:#cbd5e1;
+      margin-bottom:35px;
+      font-size:15px;
+      line-height:1.6;
+    }
+
+    .btn{
+      display:inline-block;
+      padding:16px 34px;
+      border-radius:14px;
+      text-decoration:none;
+      color:white;
+      font-weight:600;
+      font-size:16px;
+      background:linear-gradient(135deg,#3b82f6,#2563eb);
+      transition:0.3s ease;
+      box-shadow:0 0 20px rgba(59,130,246,0.5);
+    }
+
+    .btn:hover{
+      transform:translateY(-4px) scale(1.03);
+      box-shadow:0 0 35px rgba(59,130,246,0.9);
+    }
+
+    .icon{
+      font-size:55px;
+      margin-bottom:20px;
+    }
+	
+	.back-btn{
+  margin-top:18px;
+  display:block;
+
+  background:linear-gradient(135deg,#ff512f,#dd2476);
+  box-shadow:0 0 20px rgba(221,36,118,0.45);
+
+  transition:0.35s ease;
+}
+
+.back-btn:hover{
+  transform:translateY(-4px) scale(1.03);
+
+  background:linear-gradient(135deg,#ff6a00,#ee0979);
+
+  box-shadow:
+    0 0 20px rgba(255,106,0,0.6),
+    0 0 40px rgba(238,9,121,0.7);
+}
+	
+  </style>
+</head>
+
+<body>
+
+  <div class="glow"></div>
+
+  <div class="card">
+    <div class="icon">📊</div>
+    <h1>Spreadsheet Viewer</h1>
+    <p>
+      Klik tombol di bawah untuk membuka Google Spreadsheet.
+    </p>
+
+    <a class="btn"
+       href="https://docs.google.com/spreadsheets/d/1PsqqFao487tEq30cCQthTzKmxec40iwN-WDMmsp9vQY/edit?usp=sharing"
+       target="_blank">
+       Buka Spreadsheet
+    </a>
+	
+	<a class="btn back-btn"
+   href="index.html">
+   ⬅ Kembali
+</a>
+	
+  </div>
+<script>
+
+/* ===== ANTI INSPECT ===== */
+
+document.addEventListener('contextmenu', function(e){
+    e.preventDefault();
+});
+
+document.onkeydown = function(e){
+
+    // F12
+    if(e.keyCode == 123){
+        return false;
+    }
+
+    // CTRL + SHIFT + I
+    if(e.ctrlKey && e.shiftKey && e.keyCode == 73){
+        return false;
+    }
+
+    // CTRL + SHIFT + J
+    if(e.ctrlKey && e.shiftKey && e.keyCode == 74){
+        return false;
+    }
+
+    // CTRL + U
+    if(e.ctrlKey && e.keyCode == 85){
+        return false;
+    }
+
+    // CTRL + SHIFT + C
+    if(e.ctrlKey && e.shiftKey && e.keyCode == 67){
+        return false;
+    }
+
+};
+
+
+document.onselectstart = function(e){
+
+    if(e.target.closest("#listKantong")){
+        return true;
+    }
+
+    return false;
+};
+
+
+(function(){
+
+function detectDevTools(){
+
+    const start = new Date();
+
+    debugger;
+
+    const end = new Date();
+
+    if(end - start > 100){
+
+        document.body.innerHTML =
+        "<h1 style='color:red;text-align:center;margin-top:100px;'>SECURITY BLOCKED</h1>";
+
+    }
+
+}
+
+setInterval(detectDevTools,1000);
+
+})();
+
+// ===== KLIK NOMOR KANTONG AUTO COPY =====
+document.addEventListener("click", function(e){
+
+    if(e.target.tagName === "TD" && e.target.parentElement.parentElement.id === "listKantong"){
+
+        var teks = e.target.innerText;
+
+        navigator.clipboard.writeText(teks).then(function(){
+
+            // efek notifikasi kecil
+            e.target.style.background = "#00c896";
+
+            setTimeout(function(){
+                e.target.style.background = "";
+            },500);
+
+        });
+
+    }
+
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cek No Kantong PRO bc</title>
+<script src="xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+
+<style>
+body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#0f172a,#1e293b);color:#fff;padding:20px}
+.container{max-width:1000px;margin:auto}
+.card{background:#1e293b;padding:20px;border-radius:15px;box-shadow:0 10px 30px rgba(0,0,0,0.5);margin-bottom:20px}
+h2{text-align:center}
+textarea{width:100%;height:120px;border-radius:10px;padding:10px;border:none;margin-top:10px}
+input,button{padding:10px;margin:5px;border-radius:8px;border:none}
+button{background:#22c55e;color:white;cursor:pointer}
+.progress{height:20px;background:#334155;border-radius:10px;overflow:hidden;margin-top:10px}
+.progress-bar{height:100%;width:0%;background:#22c55e}
+.stats{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-around;margin-top:10px}
+.stat{background:#0f172a;padding:10px;border-radius:10px;min-width:120px;text-align:center}
+table{width:100%;border-collapse:collapse;margin-top:20px;font-size:14px}
+th,td{padding:10px;border-bottom:1px solid #334155}
+th{background:#0f172a}
+.match{background:#ef4444}
+.ok{background:#22c55e22}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<div class="card">
+<h2>CEK NO KANTONG DI TOLAK BC</h2>
+
+<label>Paste No Kantong Pembanding:</label>
+<textarea id="inputList" placeholder="Contoh:\nDWB2026021001\nDWB2026021101"></textarea>
+
+<input type="file" id="fileB">
+<br>
+<button onclick="proses()">PROSES</button>
+<button onclick="downloadExcel()">DOWNLOAD HASIL</button>
+
+<div class="progress"><div class="progress-bar" id="bar"></div></div>
+
+<div class="stats">
+<div class="stat">TOTAL DATA: <span id="total">0</span></div>
+<div class="stat">DARI PASTE: <span id="totalPaste">0</span></div>
+<div class="stat">COCOK: <span id="match">0</span></div>
+<div class="stat">ERROR: <span id="error">0</span></div>
+<div class="stat">OK: <span id="ok">0</span></div>
+</div>
+</div>
+
+<div class="card">
+<table id="hasil">
+<thead>
+<tr>
+<th>NO KANTONG</th>
+<th>KETERANGAN</th>
+<th>KETERANGAN 2</th>
+<th>KETERANGAN 3</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</div>
+
+</div>
+
+<script>
+let dataB = [];
+let hasilExport = [];
+
+function readFile(file, callback){
+    const reader = new FileReader();
+    reader.onload = e => {
+        const data = new Uint8Array(e.target.result);
+        const wb = XLSX.read(data, {type:'array'});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        callback(XLSX.utils.sheet_to_json(ws,{header:1}));
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+fileB.onchange = e => readFile(e.target.files[0], res => dataB = res);
+
+function proses(){
+    const tbody = document.querySelector('#hasil tbody');
+    tbody.innerHTML='';
+    hasilExport=[];
+
+    let inputRaw = document.getElementById('inputList').value.split('\n');
+    let input = inputRaw.map(x=>x.trim()).filter(x=>x);
+
+    let total=0,error=0,ok=0,match=0;
+
+    dataB.forEach((row,i)=>{
+        if(i===0) return;
+        total++;
+
+        let no = row[0] ?? ''; 
+        let ket = row[1] ?? ''; 
+        let ket2 = row[2] ?? ''; 
+        let ket3 = row[3] ?? ''; 
+
+        let tr=document.createElement('tr');
+
+        if(no && input.includes(no)){
+            ket='ERROR KANTONG DI TOLAK BEA CUKAI';
+            tr.classList.add('match');
+            error++;
+            match++;
+        }else{
+            tr.classList.add('ok');
+            ok++;
+        }
+
+        tr.innerHTML=`<td>${no}</td><td>${ket}</td><td>${ket2}</td><td>${ket3}</td>`;
+        tbody.appendChild(tr);
+
+        hasilExport.push([no,ket,ket2,ket3]);
+
+        document.getElementById('bar').style.width=((total/dataB.length)*100)+'%';
+    });
+
+    document.getElementById('total').innerText=total;
+    document.getElementById('totalPaste').innerText=input.length;
+    document.getElementById('match').innerText=match;
+    document.getElementById('error').innerText=error;
+    document.getElementById('ok').innerText=ok;
+}
+
+function downloadExcel(){
+    let data = [
+        ['NO KANTONG','KETERANGAN','KETERANGAN 2','KETERANGAN 3']
+    ];
+
+    hasilExport.forEach(row => data.push(row));
+
+    let ws = XLSX.utils.aoa_to_sheet(data);
+
+    // tanda ERROR pakai simbol
+    hasilExport.forEach((row, i) => {
+        if(row[1] === 'ERROR KANTONG DI TOLAK BEA CUKAI'){
+            let cellRef = XLSX.utils.encode_cell({r: i+1, c: 1});
+            if(ws[cellRef]){
+                ws[cellRef].v = '❌ ' + ws[cellRef].v;
+            }
+        }
+    });
+
+    let wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Hasil');
+    XLSX.writeFile(wb, 'hasil_kantong.xlsx');
+}
+</script>
+
+</body>
+</html>

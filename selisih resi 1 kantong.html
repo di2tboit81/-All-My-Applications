@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Resi Auto Processor FINAL BOSS</title>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+
+<style>
+body {
+    font-family: 'Segoe UI', sans-serif;
+    padding: 20px;
+    background: linear-gradient(135deg, #1e3c72, #2a5298);
+    color: #fff;
+}
+
+/* CONTAINER */
+body > * {
+    max-width: 1100px;
+    margin: auto;
+}
+
+/* TITLE */
+h2 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+/* GLASS CARD */
+table, #dropZone, #status, button {
+    backdrop-filter: blur(10px);
+    background: rgba(255,255,255,0.1);
+    border-radius: 12px;
+}
+
+/* DROP ZONE */
+#dropZone {
+    border: 2px dashed rgba(255,255,255,0.5);
+    padding: 50px;
+    text-align: center;
+    margin-bottom: 20px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+#dropZone:hover {
+    background: rgba(255,255,255,0.2);
+    transform: scale(1.02);
+}
+
+/* STATUS */
+#status {
+    padding: 10px;
+    text-align: center;
+}
+
+/* BUTTON */
+button {
+    display: block;
+    margin: 10px auto;
+    padding: 12px 25px;
+    font-weight: bold;
+    cursor: pointer;
+    border: none;
+    color: white;
+    background: linear-gradient(45deg, #00c6ff, #0072ff);
+    transition: 0.3s;
+}
+
+button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(0,0,0,0.3);
+}
+
+/* TABLE */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    overflow: hidden;
+}
+
+/* HEADER */
+th {
+    padding: 12px;
+    background: rgba(0,0,0,0.4);
+    color: #fff;
+    font-weight: bold;
+}
+
+/* CELL */
+td {
+    padding: 10px;
+    text-align: center;
+    color: #fff;
+}
+
+/* ROW EFFECT */
+tr:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+    #dropZone {
+        padding: 30px;
+        font-size: 14px;
+    }
+
+    th, td {
+        font-size: 12px;
+        padding: 6px;
+    }
+
+    button {
+        width: 100%;
+    }
+}
+
+/* TOMBOL KEMBALI */
+
+.btn-kembali{
+
+display:flex;
+justify-content:center;
+align-items:center;
+
+width:260px;
+height:48px;
+
+margin:10px auto;
+
+border-radius:14px;
+
+font-weight:bold;
+font-size:15px;
+letter-spacing:0.6px;
+
+text-decoration:none;
+color:white;
+
+background:
+linear-gradient(
+135deg,
+#8e2de2,
+#4a00e0,
+#00c6ff
+);
+
+background-size:300% 300%;
+
+box-shadow:
+0 8px 25px rgba(0,114,255,0.35),
+0 0 25px rgba(142,45,226,0.3);
+
+transition:0.35s ease;
+
+animation:gradientFlow 5s ease infinite;
+
+position:relative;
+overflow:hidden;
+
+}
+
+/* HOVER */
+
+.btn-kembali:hover{
+
+transform:translateY(-4px) scale(1.03);
+
+box-shadow:
+0 0 20px rgba(0,198,255,0.8),
+0 0 40px rgba(142,45,226,0.7),
+0 0 60px rgba(74,0,224,0.6);
+
+}
+
+/* EFEK KILAU */
+
+.btn-kembali::before{
+
+content:'';
+
+position:absolute;
+top:0;
+left:-120%;
+
+width:60%;
+height:100%;
+
+background:
+linear-gradient(
+120deg,
+transparent,
+rgba(255,255,255,0.75),
+transparent
+);
+
+transform:skewX(-25deg);
+
+transition:0.7s;
+
+}
+
+.btn-kembali:hover::before{
+
+left:130%;
+
+}
+
+/* ANIMASI */
+
+@keyframes gradientFlow{
+
+0%{
+background-position:0% 50%;
+}
+
+50%{
+background-position:100% 50%;
+}
+
+100%{
+background-position:0% 50%;
+}
+
+}
+
+</style>
+</head>
+
+<body>
+
+<h2>🚀 Upload / Drag Excel</h2>
+
+<div id="dropZone">Klik atau Drop file Excel di sini</div>
+<input type="file" id="fileInput" multiple style="display:none">
+
+<div id="status">Belum ada file</div>
+
+<button onclick="exportExcel()">⬇️ Download Excel</button>
+
+<a href="index.html" class="btn-kembali">
+⮌ KEMBALI KE HOME
+</a>
+
+<table>
+<thead>
+<tr>
+<th>CODE COLY</th>
+<th>TOTAL RESI</th>
+<th>JUMLAH</th>
+<th>SELISIH</th>
+<th>STATUS</th>
+</tr>
+</thead>
+<tbody id="tbody">
+<tr>
+<td colspan="5">Silakan upload file Excel...</td>
+</tr>
+</tbody>
+</table>
+
+<script>
+let hasilMap = {};
+
+const dropZone = document.getElementById("dropZone");
+const fileInput = document.getElementById("fileInput");
+const statusText = document.getElementById("status");
+
+dropZone.onclick = () => fileInput.click();
+
+dropZone.addEventListener("dragover", e => {
+    e.preventDefault();
+    dropZone.style.background = "#eee";
+});
+
+dropZone.addEventListener("dragleave", () => {
+    dropZone.style.background = "";
+});
+
+dropZone.addEventListener("drop", e => {
+    e.preventDefault();
+    dropZone.style.background = "";
+    handleFiles(e.dataTransfer.files);
+});
+
+fileInput.addEventListener("change", e => {
+    handleFiles(e.target.files);
+});
+
+function handleFiles(files) {
+    if (!files.length) return;
+
+    hasilMap = {};
+    statusText.innerText = "⏳ Memproses...";
+
+    let processed = 0;
+
+    for (let file of files) {
+        let reader = new FileReader();
+
+        reader.onload = function(e) {
+            try {
+                let data = new Uint8Array(e.target.result);
+                let workbook = XLSX.read(data, { type: "array" });
+
+                workbook.SheetNames.forEach(sheetName => {
+                    let sheet = workbook.Sheets[sheetName];
+                    let rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                    proses(rows);
+                });
+
+            } catch (err) {
+                statusText.innerText = "❌ Error file!";
+            }
+
+            processed++;
+            if (processed === files.length) {
+                tampilkan();
+                statusText.innerText = "✅ Selesai";
+            }
+        };
+
+        reader.readAsArrayBuffer(file);
+    }
+}
+
+function bersih(teks) {
+    return teks ? teks.toString().trim() : "";
+}
+
+function proses(rows) {
+    let header = rows[0] || [];
+
+    let idxNomor = header.findIndex(h => h && h.toString().toUpperCase().includes("NOMOR"));
+    let idxTotal = header.findIndex(h => h && h.toString().toUpperCase().includes("TOTAL"));
+    let idxCode = header.findIndex(h => h && h.toString().toUpperCase().includes("CODE"));
+    let idxJumlah = header.findIndex(h => h && h.toString().toUpperCase().includes("JUMLAH"));
+
+    rows.slice(1).forEach(row => {
+        let nomor = bersih(row[idxNomor]);
+        let total = parseInt(bersih(row[idxTotal])) || 0;
+
+        let code = bersih(row[idxCode]);
+        let jumlah = parseInt(bersih(row[idxJumlah])) || 0;
+
+        if (nomor) {
+            if (!hasilMap[nomor]) hasilMap[nomor] = { total: 0, jumlah: 0 };
+            hasilMap[nomor].total += total;
+        }
+
+        if (code) {
+            if (!hasilMap[code]) hasilMap[code] = { total: 0, jumlah: 0 };
+            hasilMap[code].jumlah += jumlah;
+        }
+    });
+}
+
+function tampilkan() {
+    let tbody = document.getElementById("tbody");
+    tbody.innerHTML = "";
+
+    Object.keys(hasilMap).forEach(kode => {
+        let d = hasilMap[kode];
+
+        if (d.total > 0 && d.jumlah > 0) {
+            let selisih = d.total - d.jumlah;
+
+            let status = selisih === 0 ? "PAS" : (selisih > 0 ? "KURANG" : "LEBIH");
+
+            tbody.innerHTML += `
+            <tr>
+                <td>${kode}</td>
+                <td>${d.total}</td>
+                <td>${d.jumlah}</td>
+                <td>${selisih}</td>
+                <td>${status}</td>
+            </tr>`;
+        }
+    });
+}
+
+/* STYLE */
+const borderAll = {
+    border: {
+        top: { style: "thin" },
+        bottom: { style: "thin" },
+        left: { style: "thin" },
+        right: { style: "thin" }
+    }
+};
+
+const headerStyle = {
+    font: { bold: true, color: { rgb: "FFFFFF" } },
+    fill: { fgColor: { rgb: "007BFF" } },
+    alignment: { horizontal: "center" },
+    ...borderAll
+};
+
+function exportExcel() {
+    let data = [];
+
+    /* HEADER BARU */
+    data.push([
+        { v: "CODE COLY", s: headerStyle },
+        { v: "RESI AWAL", s: headerStyle },
+        { v: "RESI REJECT", s: headerStyle },
+        { v: "OK", s: headerStyle }
+    ]);
+
+    Object.keys(hasilMap).forEach((kode) => {
+        let d = hasilMap[kode];
+
+        if (d.total > 0 && d.jumlah > 0) {
+
+            let selisih = d.total - d.jumlah;
+
+            let color =
+                selisih === 0
+                ? "00FF00"
+                : (selisih > 0 ? "FFFF00" : "00B0F0");
+
+            data.push([
+                {
+                    v: kode,
+                    s: {
+                        font: { bold: true },
+                        alignment:{horizontal:"center"},
+                        fill:{fgColor:{rgb:color}},
+                        ...borderAll
+                    }
+                },
+                {
+                    v: d.total,
+                    s: {
+                        alignment:{horizontal:"center"},
+                        fill:{fgColor:{rgb:color}},
+                        ...borderAll
+                    }
+                },
+                {
+                    v: d.jumlah,
+                    s: {
+                        alignment:{horizontal:"center"},
+                        fill:{fgColor:{rgb:color}},
+                        ...borderAll
+                    }
+                },
+                {
+                    v: selisih,
+                    s: {
+                        font:{bold:true},
+                        alignment:{horizontal:"center"},
+                        fill:{fgColor:{rgb:color}},
+                        ...borderAll
+                    }
+                }
+            ]);
+        }
+    });
+
+    let worksheet = XLSX.utils.aoa_to_sheet(data);
+
+    /* AUTO WIDTH */
+    worksheet["!cols"] = [
+        { wch: 25 },
+        { wch: 15 },
+        { wch: 15 },
+        { wch: 15 }
+    ];
+
+    let workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Hasil");
+
+    XLSX.writeFile(workbook, "hasil_resi_final_boss.xlsx");
+}
+
+/* ===== ANTI INSPECT ===== */
+
+document.addEventListener('contextmenu', function(e){
+    e.preventDefault();
+});
+
+document.onkeydown = function(e){
+
+    // F12
+    if(e.keyCode == 123){
+        return false;
+    }
+
+    // CTRL + SHIFT + I
+    if(e.ctrlKey && e.shiftKey && e.keyCode == 73){
+        return false;
+    }
+
+    // CTRL + SHIFT + J
+    if(e.ctrlKey && e.shiftKey && e.keyCode == 74){
+        return false;
+    }
+
+    // CTRL + U
+    if(e.ctrlKey && e.keyCode == 85){
+        return false;
+    }
+
+    // CTRL + SHIFT + C
+    if(e.ctrlKey && e.shiftKey && e.keyCode == 67){
+        return false;
+    }
+
+};
+
+
+document.onselectstart = function(e){
+
+    if(e.target.closest("#listKantong")){
+        return true;
+    }
+
+    return false;
+};
+
+
+(function(){
+
+function detectDevTools(){
+
+    const start = new Date();
+
+    debugger;
+
+    const end = new Date();
+
+    if(end - start > 100){
+
+        document.body.innerHTML =
+        "<h1 style='color:red;text-align:center;margin-top:100px;'>SECURITY BLOCKED</h1>";
+
+    }
+
+}
+
+setInterval(detectDevTools,1000);
+
+})();
+
+// ===== KLIK NOMOR KANTONG AUTO COPY =====
+document.addEventListener("click", function(e){
+
+    if(e.target.tagName === "TD" && e.target.parentElement.parentElement.id === "listKantong"){
+
+        var teks = e.target.innerText;
+
+        navigator.clipboard.writeText(teks).then(function(){
+
+            // efek notifikasi kecil
+            e.target.style.background = "#00c896";
+
+            setTimeout(function(){
+                e.target.style.background = "";
+            },500);
+
+        });
+
+    }
+
+});
+
+
+</script>
+
+</body>
+</html>

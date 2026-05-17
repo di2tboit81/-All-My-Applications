@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Smart Data Updater PRO</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#667eea,#764ba2);margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh}
+.card{background:rgba(255,255,255,0.95);backdrop-filter:blur(10px);padding:30px;border-radius:20px;width:100%;max-width:650px;box-shadow:0 20px 50px rgba(0,0,0,0.25);animation:fadeIn 0.8s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+h1{text-align:center;margin-bottom:10px}
+.subtitle{text-align:center;font-size:13px;color:#666;margin-bottom:20px}
+.label{font-weight:600;margin-top:15px}
+.sub{font-size:12px;color:#777;margin-bottom:5px}
+.count{font-size:12px;color:#2c7be5;margin-top:5px}
+input[type=file]{width:100%;padding:10px;border-radius:10px;border:1px solid #ddd}
+button{width:100%;margin-top:15px;padding:12px;border:none;border-radius:12px;background:linear-gradient(135deg,#36d1dc,#5b86e5);color:#fff;font-weight:600;cursor:pointer;transition:0.3s}
+button:hover{transform:scale(1.04)}
+.progress{margin-top:20px;background:#eee;border-radius:10px;height:20px;overflow:hidden}
+.bar{height:100%;width:0%;background:linear-gradient(90deg,#00c6ff,#0072ff);transition:width 0.3s}
+.info{text-align:center;margin-top:10px;font-size:14px}
+.detail{text-align:center;font-size:13px;color:#555;margin-top:5px}
+.download{background:linear-gradient(135deg,#11998e,#38ef7d)}
+.loader{margin:15px auto;border:4px solid #eee;border-top:4px solid #5b86e5;border-radius:50%;width:30px;height:30px;animation:spin 1s linear infinite;display:none}
+@keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+.back-btn{
+    display:block;
+    width:100%;
+    margin-top:15px;
+    padding:14px;
+
+    text-align:center;
+    text-decoration:none;
+
+    border-radius:14px;
+    font-weight:700;
+    color:white;
+
+    background:linear-gradient(
+        135deg,
+        #ff0080,
+        #7928ca,
+        #2afadf
+    );
+
+    background-size:300% 300%;
+
+    box-shadow:
+        0 10px 30px rgba(121,40,202,0.35),
+        0 0 25px rgba(42,250,223,0.25);
+
+    transition:0.35s ease;
+
+    animation:gradientShift 5s ease infinite;
+}
+
+.back-btn:hover{
+    transform:translateY(-4px) scale(1.03);
+
+    box-shadow:
+        0 15px 40px rgba(255,0,128,0.45),
+        0 0 35px rgba(121,40,202,0.5),
+        0 0 45px rgba(42,250,223,0.45);
+}
+
+@keyframes gradientShift{
+    0%{
+        background-position:0% 50%;
+    }
+    50%{
+        background-position:100% 50%;
+    }
+    100%{
+        background-position:0% 50%;
+    }
+}
+</style>
+</head>
+<body>
+
+<div class="card">
+<h1>🚀 Smart Data Updater</h1>
+<div class="subtitle">Fast • Smooth • Professional</div>
+
+<div class="label">Tabel A</div>
+<div class="sub">File asli (data utama)</div>
+<input type="file" id="fileA">
+<div class="count" id="countA">Belum ada file</div>
+
+<div class="label">Tabel B</div>
+<div class="sub">File yang diperbaiki (hasil tracking)</div>
+<input type="file" id="fileB">
+<div class="count" id="countB">Belum ada file</div>
+
+<button onclick="prosesData()">⚡ Proses Data</button>
+
+<div class="loader" id="loader"></div>
+
+<div class="progress"><div class="bar" id="bar"></div></div>
+
+<div class="info" id="info">Menunggu proses...</div>
+<div class="detail" id="detail"></div>
+
+<button class="download" id="downloadBtn" style="display:none">⬇ Download Hasil</button>
+<a href="index.html" class="back-btn">
+    ✨ Kembali ke Home
+</a>
+</div>
+
+<script>
+let dataA = [];
+let dataB = [];
+let hasilGlobal = [];
+
+function readFile(file, callback){
+const reader = new FileReader();
+reader.onload = function(e){
+const data = new Uint8Array(e.target.result);
+const workbook = XLSX.read(data, {type:'array'});
+const sheet = workbook.Sheets[workbook.SheetNames[0]];
+const json = XLSX.utils.sheet_to_json(sheet);
+callback(json);
+}
+reader.readAsArrayBuffer(file);
+}
+
+function normalisasi(val){return String(val).trim().toLowerCase();}
+
+// upload A
+ document.getElementById("fileA").addEventListener("change", function(e){
+ readFile(e.target.files[0], function(res){
+ dataA = res;
+ document.getElementById('countA').innerText = `✅ Data terbaca: ${res.length} baris`;
+ });
+ });
+
+// upload B
+ document.getElementById("fileB").addEventListener("change", function(e){
+ readFile(e.target.files[0], function(res){
+ dataB = res;
+ document.getElementById('countB').innerText = `✅ Data terbaca: ${res.length} baris`;
+ });
+ });
+
+function prosesData(){
+if(dataA.length===0||dataB.length===0){alert("Upload file dulu!");return;}
+
+const loader=document.getElementById('loader');
+loader.style.display='block';
+
+const key='Link';
+const mapB={};
+dataB.forEach(r=>{mapB[normalisasi(r[key])]=r});
+
+let jumlahUpdate=0;
+let total=dataA.length;
+let processed=0;
+
+const bar=document.getElementById('bar');
+const info=document.getElementById('info');
+const detail=document.getElementById('detail');
+
+hasilGlobal = dataA.map((rowA,i)=>{
+const link=normalisasi(rowA[key]);
+const update=mapB[link];
+
+if(update){
+let berubah=false;
+if(update['Kota']&&update['Kota']!=='Tidak ditemukan'){rowA['Kota']=update['Kota'];berubah=true}
+if(update['Status']&&update['Status']!=='Tidak ditemukan'){rowA['Status']=update['Status'];berubah=true}
+if(berubah) jumlahUpdate++;
+}
+
+processed++;
+let persen=Math.round(((i+1)/total)*100);
+bar.style.width=persen+'%';
+info.innerText=`Progress: ${persen}%`;
+detail.innerText=`Diproses: ${processed} / ${total} | Update: ${jumlahUpdate}`;
+
+return rowA;
+});
+
+loader.style.display='none';
+info.innerText=`✅ Selesai`;
+detail.innerText=`Total Data: ${total} | Berhasil Update: ${jumlahUpdate}`;
+
+document.getElementById('downloadBtn').style.display='block';
+}
+
+// download
+ document.getElementById('downloadBtn').addEventListener('click',()=>{
+ const ws=XLSX.utils.json_to_sheet(hasilGlobal);
+ const wb=XLSX.utils.book_new();
+ XLSX.utils.book_append_sheet(wb,ws,"Hasil");
+ XLSX.writeFile(wb,"hasil_update.xlsx");
+ });
+ 
+ /* ===== ANTI INSPECT ===== */
+
+document.addEventListener('contextmenu', function(e){
+    e.preventDefault();
+});
+
+document.onkeydown = function(e){
+
+    // F12
+    if(e.keyCode == 123){
+        return false;
+    }
+
+    // CTRL + SHIFT + I
+    if(e.ctrlKey && e.shiftKey && e.keyCode == 73){
+        return false;
+    }
+
+    // CTRL + SHIFT + J
+    if(e.ctrlKey && e.shiftKey && e.keyCode == 74){
+        return false;
+    }
+
+    // CTRL + U
+    if(e.ctrlKey && e.keyCode == 85){
+        return false;
+    }
+
+    // CTRL + SHIFT + C
+    if(e.ctrlKey && e.shiftKey && e.keyCode == 67){
+        return false;
+    }
+
+};
+
+
+document.onselectstart = function(e){
+
+    if(e.target.closest("#listKantong")){
+        return true;
+    }
+
+    return false;
+};
+
+
+(function(){
+
+function detectDevTools(){
+
+    const start = new Date();
+
+    debugger;
+
+    const end = new Date();
+
+    if(end - start > 100){
+
+        document.body.innerHTML =
+        "<h1 style='color:red;text-align:center;margin-top:100px;'>SECURITY BLOCKED</h1>";
+
+    }
+
+}
+
+setInterval(detectDevTools,1000);
+
+})();
+
+// ===== KLIK NOMOR KANTONG AUTO COPY =====
+document.addEventListener("click", function(e){
+
+    if(e.target.tagName === "TD" && e.target.parentElement.parentElement.id === "listKantong"){
+
+        var teks = e.target.innerText;
+
+        navigator.clipboard.writeText(teks).then(function(){
+
+            // efek notifikasi kecil
+            e.target.style.background = "#00c896";
+
+            setTimeout(function(){
+                e.target.style.background = "";
+            },500);
+
+        });
+
+    }
+
+});
+
+ 
+</script>
+
+</body>
+</html>

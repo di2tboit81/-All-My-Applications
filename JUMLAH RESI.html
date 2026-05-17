@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DATA CN/RESI TOLAK BC</title>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+    margin: 0;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1100px;
+    margin: auto;
+}
+
+.card {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+h2 {
+    text-align: center;
+}
+
+.drop-zone {
+    border: 2px dashed #999;
+    border-radius: 10px;
+    padding: 30px;
+    text-align: center;
+    cursor: pointer;
+}
+
+.drop-zone:hover {
+    background: #f0f8ff;
+}
+
+button {
+    margin-bottom: 10px;
+    padding: 10px 15px;
+    border: none;
+    background: #28a745;
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th {
+    background: #1a2a6c;
+    color: white;
+    padding: 10px;
+}
+
+td {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+    vertical-align: top;
+}
+
+.awb-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 13px;
+}
+
+.badge {
+    background: #28a745;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+    <div class="card">
+        <h2>📂 Upload Excel</h2>
+        <div class="drop-zone" id="dropZone">
+            Drag & Drop atau Klik Upload
+        </div>
+        <input type="file" id="fileInput" hidden>
+    </div>
+
+    <div class="card">
+        <h2>📊 Grafik Jumlah Coly</h2>
+        <canvas id="chart"></canvas>
+    </div>
+
+    <div class="card">
+        <h2>📦 Rekap Data</h2>
+        <button onclick="exportExcel()">⬇️ Download Excel</button>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Code Coly</th>
+                    <th>AWB (ke bawah)</th>
+                    <th>Jumlah</th>
+                </tr>
+            </thead>
+            <tbody id="result"></tbody>
+        </table>
+    </div>
+
+</div>
+
+<script>
+const dropZone = document.getElementById("dropZone");
+const fileInput = document.getElementById("fileInput");
+let chart;
+let lastGrouped = {};
+
+dropZone.onclick = () => fileInput.click();
+
+dropZone.addEventListener("dragover", e => e.preventDefault());
+
+dropZone.addEventListener("drop", e => {
+    e.preventDefault();
+    handleFile(e.dataTransfer.files[0]);
+});
+
+fileInput.addEventListener("change", e => {
+    handleFile(e.target.files[0]);
+});
+
+function handleFile(file) {
+    const reader = new FileReader();
+
+    reader.onload = function(e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(sheet);
+
+        processData(json);
+    };
+
+    reader.readAsArrayBuffer(file);
+}
+
+function processData(data) {
+    let grouped = {};
+
+    data.forEach(row => {
+        let code = row["CODE COLY"];
+        let awb = row["AWB/RESI"];
+
+        if (!code || !awb) return;
+
+        if (!grouped[code]) {
+            grouped[code] = { awb: [], count: 0 };
+        }
+
+        grouped[code].awb.push(awb);
+        grouped[code].count++;
+    });
+
+    lastGrouped = grouped;
+
+    renderTable(grouped);
+    renderChart(grouped);
+}
+
+function renderTable(grouped) {
+    let html = "";
+
+    for (let code in grouped) {
+        let awbList = grouped[code].awb
+            .map(a => `<div>• ${a}</div>`)
+            .join("");
+
+        html += `
+        <tr>
+            <td><b>${code}</b></td>
+            <td><div class="awb-list">${awbList}</div></td>
+            <td><span class="badge">${grouped[code].count}</span></td>
+        </tr>`;
+    }
+
+    document.getElementById("result").innerHTML = html;
+}
+
+function renderChart(grouped) {
+    const labels = Object.keys(grouped);
+    const counts = labels.map(k => grouped[k].count);
+
+    if (chart) chart.destroy();
+
+    chart = new Chart(document.getElementById("chart"), {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Jumlah Coly',
+                data: counts
+            }]
+        }
+    });
+}
+
+function exportExcel() {
+    if (Object.keys(lastGrouped).length === 0) {
+        alert("Data belum ada!");
+        return;
+    }
+
+    let wb = XLSX.utils.book_new();
+    let ws = {};
+
+    let row = 0;
+
+    // ===== HEADER TABEL KIRI =====
+    XLSX.utils.sheet_add_aoa(ws, [
+        ["CODE COLY", "AWB", "JUMLAH"]
+    ], { origin: { r: 0, c: 0 } });
+
+    row++;
+
+    // ===== DATA KIRI =====
+    for (let code in lastGrouped) {
+        let awbs = lastGrouped[code].awb;
+
+        awbs.forEach((awb, index) => {
+            XLSX.utils.sheet_add_aoa(ws, [[
+                index === 0 ? code : "",
+                awb,
+                index === 0 ? awbs.length : ""
+            ]], { origin: { r: row, c: 0 } });
+
+            row++;
+        });
+    }
+
+    // ===== HEADER TABEL KANAN =====
+    XLSX.utils.sheet_add_aoa(ws, [
+        ["CODE COLY", "JUMLAH"]
+    ], { origin: { r: 0, c: 4 } }); // 👉 kolom E
+
+    let rowRight = 1;
+
+    // ===== DATA KANAN =====
+    for (let code in lastGrouped) {
+        XLSX.utils.sheet_add_aoa(ws, [[
+            code,
+            lastGrouped[code].count
+        ]], { origin: { r: rowRight, c: 4 } });
+
+        rowRight++;
+    }
+
+    // ===== RANGE =====
+    ws['!ref'] = XLSX.utils.encode_range({
+        s: { r: 0, c: 0 },
+        e: { r: Math.max(row, rowRight), c: 5 }
+    });
+
+    // ===== STYLE =====
+    const range = XLSX.utils.decode_range(ws['!ref']);
+
+    for (let R = 0; R <= range.e.r; ++R) {
+        for (let C = 0; C <= range.e.c; ++C) {
+            let cell = XLSX.utils.encode_cell({ r: R, c: C });
+            if (!ws[cell]) continue;
+
+            let isHeader = R === 0 && (C <= 2 || C >= 4);
+
+            ws[cell].s = {
+                font: {
+                    bold: (C === 0 || C === 2 || C === 4 || C === 5),
+                    color: { rgb: isHeader ? "FFFFFF" : "000000" }
+                },
+                fill: {
+                    fgColor: { rgb: isHeader ? "1A2A6C" : "FFFFFF" }
+                },
+                alignment: {
+                    horizontal: (C === 2 || C === 5) ? "center" : "left"
+                },
+                border: {
+                    top: { style: "thin" },
+                    bottom: { style: "thin" },
+                    left: { style: "thin" },
+                    right: { style: "thin" }
+                }
+            };
+        }
+    }
+
+    // ===== LEBAR KOLOM =====
+    ws['!cols'] = [
+        { wch: 28 },
+        { wch: 35 },
+        { wch: 10 },
+        { wch: 5 },
+        { wch: 28 },
+        { wch: 10 }
+    ];
+
+    XLSX.utils.book_append_sheet(wb, ws, "Laporan");
+
+    XLSX.writeFile(wb, "LAPORAN_CN_DITOLAK.xlsx");
+}
+
+/* ===== ANTI INSPECT ===== */
+
+document.addEventListener('contextmenu', function(e){
+    e.preventDefault();
+});
+
+document.onkeydown = function(e){
+
+    // F12
+    if(e.keyCode == 123){
+        return false;
+    }
+
+    // CTRL + SHIFT + I
+    if(e.ctrlKey && e.shiftKey && e.keyCode == 73){
+        return false;
+    }
+
+    // CTRL + SHIFT + J
+    if(e.ctrlKey && e.shiftKey && e.keyCode == 74){
+        return false;
+    }
+
+    // CTRL + U
+    if(e.ctrlKey && e.keyCode == 85){
+        return false;
+    }
+
+    // CTRL + SHIFT + C
+    if(e.ctrlKey && e.shiftKey && e.keyCode == 67){
+        return false;
+    }
+
+};
+
+
+document.onselectstart = function(e){
+
+    if(e.target.closest("#listKantong")){
+        return true;
+    }
+
+    return false;
+};
+
+
+(function(){
+
+function detectDevTools(){
+
+    const start = new Date();
+
+    debugger;
+
+    const end = new Date();
+
+    if(end - start > 100){
+
+        document.body.innerHTML =
+        "<h1 style='color:red;text-align:center;margin-top:100px;'>SECURITY BLOCKED</h1>";
+
+    }
+
+}
+
+setInterval(detectDevTools,1000);
+
+})();
+
+// ===== KLIK NOMOR KANTONG AUTO COPY =====
+document.addEventListener("click", function(e){
+
+    if(e.target.tagName === "TD" && e.target.parentElement.parentElement.id === "listKantong"){
+
+        var teks = e.target.innerText;
+
+        navigator.clipboard.writeText(teks).then(function(){
+
+            // efek notifikasi kecil
+            e.target.style.background = "#00c896";
+
+            setTimeout(function(){
+                e.target.style.background = "";
+            },500);
+
+        });
+
+    }
+
+});
+
+
+</script>
+
+</body>
+</html>

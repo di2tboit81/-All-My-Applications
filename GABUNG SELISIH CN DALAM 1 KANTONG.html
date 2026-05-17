@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RESI AUTO PROCESSOR ULTIMATE</title>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+}
+
+body{
+font-family:'Segoe UI',sans-serif;
+background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+min-height:100vh;
+padding:20px;
+color:white;
+overflow-x:hidden;
+}
+
+.container{
+max-width:1400px;
+margin:auto;
+}
+
+.title{
+text-align:center;
+font-size:40px;
+font-weight:900;
+margin-bottom:25px;
+text-shadow:0 0 20px rgba(255,255,255,0.4);
+}
+
+.glass{
+background:rgba(255,255,255,0.08);
+backdrop-filter:blur(12px);
+border:1px solid rgba(255,255,255,0.1);
+border-radius:20px;
+box-shadow:0 8px 40px rgba(0,0,0,0.3);
+}
+
+#dropZone{
+padding:60px;
+text-align:center;
+cursor:pointer;
+font-size:22px;
+font-weight:bold;
+transition:0.3s;
+margin-bottom:20px;
+border:2px dashed rgba(255,255,255,0.4);
+}
+
+#dropZone:hover{
+transform:scale(1.01);
+background:rgba(255,255,255,0.15);
+}
+
+.top-controls{
+display:flex;
+flex-wrap:wrap;
+gap:15px;
+justify-content:center;
+align-items:center;
+margin-bottom:20px;
+}
+
+.input-box{
+padding:14px;
+width:320px;
+border:none;
+border-radius:14px;
+font-size:16px;
+font-weight:bold;
+text-align:center;
+outline:none;
+}
+
+.btn{
+padding:14px 28px;
+border:none;
+border-radius:14px;
+font-size:15px;
+font-weight:bold;
+cursor:pointer;
+transition:0.3s;
+color:white;
+background:linear-gradient(135deg,#00c6ff,#0072ff);
+box-shadow:0 8px 20px rgba(0,114,255,0.3);
+}
+
+.btn:hover{
+transform:translateY(-3px) scale(1.03);
+}
+
+.btn-home{
+background:linear-gradient(135deg,#8e2de2,#4a00e0,#00c6ff);
+text-decoration:none;
+display:flex;
+align-items:center;
+justify-content:center;
+}
+
+#status{
+padding:15px;
+text-align:center;
+font-weight:bold;
+margin-bottom:20px;
+}
+
+.card-grid{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:20px;
+}
+
+.card{
+padding:18px;
+overflow:auto;
+}
+
+.card h3{
+margin-bottom:15px;
+text-align:center;
+font-size:22px;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+overflow:hidden;
+border-radius:15px;
+}
+
+th{
+padding:12px;
+background:rgba(0,0,0,0.4);
+}
+
+td{
+padding:10px;
+text-align:center;
+font-weight:bold;
+}
+
+tr:hover{
+background:rgba(255,255,255,0.1);
+}
+
+.footer{
+text-align:center;
+margin-top:20px;
+opacity:0.8;
+}
+
+@media(max-width:900px){
+.card-grid{
+grid-template-columns:1fr;
+}
+
+.title{
+font-size:28px;
+}
+
+#dropZone{
+padding:35px;
+font-size:16px;
+}
+}
+
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<div class="title">
+🚀 RESI AUTO PROCESSOR ULTIMATE
+</div>
+
+<div id="dropZone" class="glass">
+📂 KLIK ATAU DROP FILE EXCEL DI SINI
+</div>
+
+<input type="file" id="fileInput" multiple style="display:none">
+
+<div id="status" class="glass">
+Belum ada file
+</div>
+
+<div class="top-controls">
+
+<input
+type="text"
+id="manualPengajuan"
+class="input-box"
+placeholder="Contoh : PENGAJUAN 01">
+
+<button class="btn" onclick="downloadSemuaExcel()">
+⬇️ DOWNLOAD 3 FILE
+</button>
+
+<a href="index.html" class="btn btn-home">
+⮌ KEMBALI HOME
+</a>
+
+</div>
+
+<div class="card-grid">
+
+<div class="card glass">
+<h3>📦 FINAL BOSS STATUS</h3>
+
+<table>
+<thead>
+<tr>
+<th>CODE COLY</th>
+<th>RESI AWAL</th>
+<th>RESI REJECT</th>
+<th>OK</th>
+<th>STATUS</th>
+</tr>
+</thead>
+<tbody id="tbodyFinal">
+<tr>
+<td colspan="5">Silakan upload file Excel...</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<div class="card glass">
+<h3>📊 SELISIH MONITOR</h3>
+
+<table>
+<thead>
+<tr>
+<th>CODE COLY</th>
+<th>TOTAL RESI</th>
+<th>JUMLAH</th>
+<th>SELISIH</th>
+<th>STATUS</th>
+</tr>
+</thead>
+<tbody id="tbodySelisih">
+<tr>
+<td colspan="5">Silakan upload file Excel...</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+</div>
+
+<div class="footer">
+⚡ FINAL BOSS EDITION • 3 EXPORT SYSTEM • GLASS UI
+</div>
+
+</div>
+
+<script>
+
+let hasilMap = {};
+
+const dropZone = document.getElementById("dropZone");
+const fileInput = document.getElementById("fileInput");
+const statusText = document.getElementById("status");
+
+dropZone.onclick = () => fileInput.click();
+
+// DRAG
+
+dropZone.addEventListener("dragover", e => {
+
+e.preventDefault();
+dropZone.style.background = "rgba(255,255,255,0.2)";
+
+});
+
+dropZone.addEventListener("dragleave", () => {
+
+dropZone.style.background = "";
+
+});
+
+dropZone.addEventListener("drop", e => {
+
+e.preventDefault();
+dropZone.style.background = "";
+handleFiles(e.dataTransfer.files);
+
+});
+
+fileInput.addEventListener("change", e => {
+handleFiles(e.target.files);
+});
+
+function handleFiles(files){
+
+if(!files.length) return;
+
+hasilMap = {};
+
+statusText.innerText = "⏳ Memproses file Excel...";
+
+let processed = 0;
+
+for(let file of files){
+
+let reader = new FileReader();
+
+reader.onload = function(e){
+
+try{
+
+let data = new Uint8Array(e.target.result);
+
+let workbook = XLSX.read(data,{type:"array"});
+
+workbook.SheetNames.forEach(sheetName=>{
+
+let sheet = workbook.Sheets[sheetName];
+
+let rows = XLSX.utils.sheet_to_json(sheet,{header:1});
+
+proses(rows);
+
+});
+
+}catch(err){
+
+statusText.innerText = "❌ Error membaca file";
+
+}
+
+processed++;
+
+if(processed === files.length){
+
+renderFinalBoss();
+renderSelisih();
+
+statusText.innerText = "✅ Semua file berhasil diproses";
+
+}
+
+};
+
+reader.readAsArrayBuffer(file);
+
+}
+
+}
+
+function bersih(teks){
+return teks ? teks.toString().trim() : "";
+}
+
+function proses(rows){
+
+let header = rows[0] || [];
+
+let idxNomor = header.findIndex(h=>
+h && h.toString().toUpperCase().includes("NOMOR")
+);
+
+let idxTotal = header.findIndex(h=>
+h && h.toString().toUpperCase().includes("TOTAL")
+);
+
+let idxCode = header.findIndex(h=>
+h && h.toString().toUpperCase().includes("CODE")
+);
+
+let idxJumlah = header.findIndex(h=>
+h && h.toString().toUpperCase().includes("JUMLAH")
+);
+
+rows.slice(1).forEach(row=>{
+
+let nomor = bersih(row[idxNomor]);
+let total = parseInt(bersih(row[idxTotal])) || 0;
+
+let code = bersih(row[idxCode]);
+let jumlah = parseInt(bersih(row[idxJumlah])) || 0;
+
+if(nomor){
+
+if(!hasilMap[nomor]){
+hasilMap[nomor] = {total:0,jumlah:0};
+}
+
+hasilMap[nomor].total += total;
+
+}
+
+if(code){
+
+if(!hasilMap[code]){
+hasilMap[code] = {total:0,jumlah:0};
+}
+
+hasilMap[code].jumlah += jumlah;
+
+}
+
+});
+
+}
+
+// ================= FINAL BOSS =================
+
+function renderFinalBoss(){
+
+let tbody = document.getElementById("tbodyFinal");
+
+tbody.innerHTML = "";
+
+let rowsMerah = [];
+let rowsKuning = [];
+let rowsHijau = [];
+
+Object.keys(hasilMap).forEach(kode=>{
+
+let d = hasilMap[kode];
+
+let total = d.total || 0;
+let reject = d.jumlah || 0;
+let ok = total - reject;
+
+let status = "";
+let warna = "";
+
+if(total > 0 && reject > 0 && ok === 0){
+
+status = "FULL KANTONG REJECT";
+warna = "#ff4d4d";
+
+}else if(total > 0 && reject > 0 && ok !== 0){
+
+status = "SELISIH RESI / CN";
+warna = "#ffd11a";
+
+}else if(total > 0 && reject === 0){
+
+status = "FULL KANTONG OK";
+warna = "#00c853";
+
+}
+
+let html = `
+<tr style="background:${warna};color:black;">
+<td>${kode}</td>
+<td>${total}</td>
+<td>${reject}</td>
+<td>${ok}</td>
+<td>${status}</td>
+</tr>`;
+
+if(warna === "#ff4d4d"){
+rowsMerah.push(html);
+}else if(warna === "#ffd11a"){
+rowsKuning.push(html);
+}else if(warna === "#00c853"){
+rowsHijau.push(html);
+}
+
+});
+
+tbody.innerHTML =
+rowsMerah.join("") +
+rowsKuning.join("") +
+rowsHijau.join("");
+
+}
+
+// ================= SELISIH =================
+
+function renderSelisih(){
+
+let tbody = document.getElementById("tbodySelisih");
+
+tbody.innerHTML = "";
+
+Object.keys(hasilMap).forEach(kode=>{
+
+let d = hasilMap[kode];
+
+if(d.total > 0 && d.jumlah > 0){
+
+let selisih = d.total - d.jumlah;
+
+let status = selisih === 0
+? "PAS"
+: (selisih > 0 ? "KURANG" : "LEBIH");
+
+let warna = selisih === 0
+? "#00ff99"
+: (selisih > 0 ? "#ffd11a" : "#00b0f0");
+
+tbody.innerHTML += `
+<tr style="background:${warna};color:black;">
+<td>${kode}</td>
+<td>${d.total}</td>
+<td>${d.jumlah}</td>
+<td>${selisih}</td>
+<td>${status}</td>
+</tr>`;
+
+}
+
+});
+
+}
+
+// ================= STYLE EXCEL =================
+
+const borderAll = {
+
+border:{
+
+top:{style:"thin"},
+bottom:{style:"thin"},
+left:{style:"thin"},
+right:{style:"thin"}
+
+}
+
+};
+
+const headerStyle = {
+
+font:{
+bold:true,
+color:{rgb:"FFFFFF"}
+},
+
+fill:{
+fgColor:{rgb:"007BFF"}
+},
+
+alignment:{
+horizontal:"center"
+},
+
+...borderAll
+
+};
+
+// ================= EXPORT FINAL BOSS =================
+
+function exportExcelFinalBoss(){
+
+let data = [];
+
+data.push([
+{v:"CODE COLY",s:headerStyle},
+{v:"RESI AWAL",s:headerStyle},
+{v:"RESI REJECT",s:headerStyle},
+{v:"OK",s:headerStyle},
+{v:"STATUS",s:headerStyle}
+]);
+
+// ===== URUTAN WARNA =====
+let rowsHijau = [];
+let rowsKuning = [];
+let rowsMerah = [];
+
+Object.keys(hasilMap).forEach(kode=>{
+
+let d = hasilMap[kode];
+
+let total = d.total || 0;
+let reject = d.jumlah || 0;
+let ok = total - reject;
+
+let status = "";
+let color = "";
+
+if(total > 0 && reject > 0 && ok === 0){
+
+status = "FULL KANTONG REJECT";
+color = "FF4D4D";
+
+}else if(total > 0 && reject > 0 && ok !== 0){
+
+status = "SELISIH RESI / CN";
+color = "FFD11A";
+
+}else if(total > 0 && reject === 0){
+
+status = "FULL KANTONG OK";
+color = "00C853";
+
+}
+
+if(status !== ""){
+
+let rowData = [
+
+{
+v:kode,
+s:{
+font:{
+bold:true,
+sz:11,
+color:{rgb:"000000"}
+},
+fill:{fgColor:{rgb:color}},
+alignment:{
+horizontal:"center",
+vertical:"center"
+},
+...borderAll
+}
+},
+
+{
+v:total,
+s:{
+fill:{fgColor:{rgb:color}},
+alignment:{horizontal:"center"},
+...borderAll
+}
+},
+
+{
+v:reject,
+s:{
+fill:{fgColor:{rgb:color}},
+alignment:{horizontal:"center"},
+...borderAll
+}
+},
+
+{
+v:ok,
+s:{
+font:{
+bold:true,
+sz:11,
+color:{rgb:"000000"}
+},
+fill:{fgColor:{rgb:color}},
+alignment:{
+horizontal:"center",
+vertical:"center"
+},
+...borderAll
+}
+},
+
+{
+v:status,
+s:{
+font:{
+bold:true,
+sz:11,
+color:{rgb:"000000"}
+},
+fill:{fgColor:{rgb:color}},
+alignment:{
+horizontal:"center",
+vertical:"center"
+},
+...borderAll
+}
+}
+
+];
+
+
+// ===== URUTKAN =====
+if(color === "00C853"){
+
+rowsHijau.push(rowData);
+
+}else if(color === "FFD11A"){
+
+rowsKuning.push(rowData);
+
+}else if(color === "FF4D4D"){
+
+rowsMerah.push(rowData);
+
+}
+
+}
+
+});
+
+
+// ===== GABUNGKAN =====
+data = data
+.concat(rowsHijau)
+.concat(rowsKuning)
+.concat(rowsMerah);
+
+let ws = XLSX.utils.aoa_to_sheet(data);
+
+ws["!cols"] = [
+{wch:25},
+{wch:15},
+{wch:15},
+{wch:15},
+{wch:28}
+];
+
+// ================= SUMMARY KANAN =================
+
+let totalHijau = rowsHijau.length;
+let totalKuning = rowsKuning.length;
+let totalMerah = rowsMerah.length;
+let totalSemua = totalHijau + totalKuning + totalMerah;
+
+// HEADER
+ws["G1"] = {
+v:"STATUS",
+t:"s",
+s:{
+font:{bold:true,color:{rgb:"FFFFFF"}},
+fill:{fgColor:{rgb:"007BFF"}},
+alignment:{horizontal:"center"},
+...borderAll
+}
+};
+
+ws["H1"] = {
+v:"JUMLAH KANTONG",
+t:"s",
+s:{
+font:{bold:true,color:{rgb:"FFFFFF"}},
+fill:{fgColor:{rgb:"007BFF"}},
+alignment:{horizontal:"center"},
+...borderAll
+}
+};
+
+// HIJAU
+ws["G2"] = {
+v:"FULL KANTONG OK",
+t:"s",
+s:{
+font:{bold:true,color:{rgb:"000000"}},
+fill:{fgColor:{rgb:"00C853"}},
+alignment:{horizontal:"center"},
+...borderAll
+}
+};
+
+ws["H2"] = {
+v:totalHijau + " KANTONG",
+t:"s",
+s:{
+font:{bold:true,color:{rgb:"000000"}},
+fill:{fgColor:{rgb:"00C853"}},
+alignment:{horizontal:"center"},
+...borderAll
+}
+};
+
+// KUNING
+ws["G3"] = {
+v:"SELISIH RESI / CN",
+t:"s",
+s:{
+font:{bold:true,color:{rgb:"000000"}},
+fill:{fgColor:{rgb:"FFD11A"}},
+alignment:{horizontal:"center"},
+...borderAll
+}
+};
+
+ws["H3"] = {
+v:totalKuning + " KANTONG",
+t:"s",
+s:{
+font:{bold:true,color:{rgb:"000000"}},
+fill:{fgColor:{rgb:"FFD11A"}},
+alignment:{horizontal:"center"},
+...borderAll
+}
+};
+
+// MERAH
+ws["G4"] = {
+v:"FULL KANTONG REJECT",
+t:"s",
+s:{
+font:{bold:true,color:{rgb:"000000"}},
+fill:{fgColor:{rgb:"FF4D4D"}},
+alignment:{horizontal:"center"},
+...borderAll
+}
+};
+
+ws["H4"] = {
+v:totalMerah + " KANTONG",
+t:"s",
+s:{
+font:{bold:true,color:{rgb:"000000"}},
+fill:{fgColor:{rgb:"FF4D4D"}},
+alignment:{horizontal:"center"},
+...borderAll
+}
+};
+
+// TOTAL
+ws["G5"] = {
+v:"TOTAL KANTONG",
+t:"s",
+s:{
+font:{bold:true,sz:14,color:{rgb:"000000"}},
+fill:{fgColor:{rgb:"00B0F0"}},
+alignment:{horizontal:"center"},
+...borderAll
+}
+};
+
+ws["H5"] = {
+v:totalSemua + " KANTONG",
+t:"s",
+s:{
+font:{bold:true,sz:14,color:{rgb:"000000"}},
+fill:{fgColor:{rgb:"00B0F0"}},
+alignment:{horizontal:"center"},
+...borderAll
+}
+};
+
+// LEBAR KOLOM SUMMARY
+ws["!cols"] = [
+{wch:25},
+{wch:15},
+{wch:15},
+{wch:15},
+{wch:28},
+{wch:5},
+{wch:28},
+{wch:20}
+];
+
+// ===== PERLUAS AREA SHEET OTOMATIS =====
+let totalRows = data.length;
+
+ws["!ref"] = XLSX.utils.encode_range({
+s:{r:0,c:0},
+e:{r:totalRows,c:7}
+});
+
+let wb = XLSX.utils.book_new();
+
+XLSX.utils.book_append_sheet(wb,ws,"FINAL BOSS");
+
+
+// ===== NAMA FILE BARU =====
+XLSX.writeFile(wb,"TABEL FIX.xlsx");
+
+}
+
+// ================= EXPORT SELISIH =================
+
+function exportExcelSelisih(){
+
+let data = [];
+
+data.push([
+{v:"CODE COLY",s:headerStyle},
+{v:"RESI AWAL",s:headerStyle},
+{v:"RESI REJECT",s:headerStyle},
+{v:"OK",s:headerStyle}
+]);
+
+Object.keys(hasilMap).forEach(kode=>{
+
+let d = hasilMap[kode];
+
+if(d.total > 0 && d.jumlah > 0){
+
+let ok = d.total - d.jumlah;
+
+let color = ok === 0
+? "00FF00"
+: (ok > 0 ? "FFFF00" : "00B0F0");
+
+data.push([
+
+{
+v:kode,
+s:{
+font:{
+bold:true,
+sz:11,
+color:{rgb:"000000"}
+},
+fill:{fgColor:{rgb:color}},
+alignment:{
+horizontal:"center",
+vertical:"center"
+},
+...borderAll
+}
+},
+
+{
+v:d.total,
+s:{
+fill:{fgColor:{rgb:color}},
+alignment:{horizontal:"center"},
+...borderAll
+}
+},
+
+{
+v:d.jumlah,
+s:{
+fill:{fgColor:{rgb:color}},
+alignment:{horizontal:"center"},
+...borderAll
+}
+},
+
+{
+v:ok,
+s:{
+font:{
+bold:true,
+sz:11,
+color:{rgb:"000000"}
+},
+fill:{fgColor:{rgb:color}},
+alignment:{
+horizontal:"center",
+vertical:"center"
+},
+...borderAll
+}
+}
+
+]);
+
+}
+
+});
+
+let ws = XLSX.utils.aoa_to_sheet(data);
+
+ws["!cols"] = [
+{wch:25},
+{wch:15},
+{wch:15},
+{wch:15}
+];
+
+let wb = XLSX.utils.book_new();
+
+XLSX.utils.book_append_sheet(wb,ws,"SELISIH");
+
+// ===== NAMA FILE BARU =====
+XLSX.writeFile(wb,"KANTONG WIN 4.xlsx");
+
+}
+
+// ================= EXPORT PENGAJUAN =================
+
+function exportPengajuanExcel(){
+
+let workbook = XLSX.utils.book_new();
+let ws = {};
+let merges = [];
+let dataList = [];
+
+Object.keys(hasilMap).forEach((kode)=>{
+
+let d = hasilMap[kode];
+
+let total = d.total || 0;
+let reject = d.jumlah || 0;
+let ok = total - reject;
+
+if(total > 0 && !(reject > 0 && ok === 0)){
+
+dataList.push({
+kode:kode,
+total:ok,
+pengajuan:ok
+});
+
+}
+
+});
+
+const border = {
+
+top:{style:"thin"},
+bottom:{style:"thin"},
+left:{style:"thin"},
+right:{style:"thin"}
+
+};
+
+const styleText = {
+font:{bold:true},
+alignment:{horizontal:"center",vertical:"center"},
+border:border
+};
+
+const stylePengajuan = {
+font:{bold:true,color:{rgb:"000000"}},
+fill:{fgColor:{rgb:"FFFF00"}},
+alignment:{horizontal:"center",vertical:"center"},
+border:border
+};
+
+let perBlok = 10;
+let totalBlok = Math.ceil(dataList.length / perBlok);
+
+for(let blok=0; blok<totalBlok; blok++){
+
+let colAwal = blok * 2;
+
+let items = dataList.slice(blok * perBlok,(blok + 1) * perBlok);
+
+items.forEach((item,index)=>{
+
+let row = index;
+
+let cellKode = XLSX.utils.encode_cell({r:row,c:colAwal});
+
+ws[cellKode] = {
+v:item.kode,
+t:"s",
+s:styleText
+};
+
+let cellTotal = XLSX.utils.encode_cell({r:row,c:colAwal+1});
+
+ws[cellTotal] = {
+v:item.total,
+t:"n",
+s:styleText
+};
+
+});
+
+let totalPengajuan = items.reduce((a,b)=>a+b.pengajuan,0);
+
+let manualText = document.getElementById("manualPengajuan").value.trim();
+
+let pengajuanRow = 10;
+
+let cellPengajuan = XLSX.utils.encode_cell({r:pengajuanRow,c:colAwal});
+
+ws[cellPengajuan] = {
+v:manualText ? manualText.toUpperCase() : ("PENGAJUAN " + totalPengajuan),
+t:"s",
+s:stylePengajuan
+};
+
+merges.push({
+s:{r:pengajuanRow,c:colAwal},
+e:{r:pengajuanRow,c:colAwal+1}
+});
+
+}
+
+let totalKantong = dataList.length;
+let totalKantongRow = 12;
+
+let cellTotalKantong = XLSX.utils.encode_cell({r:totalKantongRow,c:0});
+
+ws[cellTotalKantong] = {
+v:"JUMLAH KANTONG : " + totalKantong + " KANTONG",
+t:"s",
+s:{
+font:{bold:true,sz:16,color:{rgb:"000000"}},
+alignment:{horizontal:"left",vertical:"center"}
+}
+};
+
+ws["!ref"] = XLSX.utils.encode_range({
+s:{r:0,c:0},
+e:{r:13,c:(totalBlok*2)}
+});
+
+ws["!merges"] = merges;
+
+ws["!cols"] = [];
+
+for(let i=0;i<(totalBlok*2);i++){
+
+if(i % 2 == 0){
+ws["!cols"].push({wch:26});
+}else{
+ws["!cols"].push({wch:8});
+}
+
+}
+
+XLSX.utils.book_append_sheet(workbook,ws,"Pengajuan");
+
+XLSX.writeFile(workbook,"SPREADSHEET.xlsx");
+
+}
+
+// ================= DOWNLOAD SEMUA =================
+
+function downloadSemuaExcel(){
+
+let manualInput = document.getElementById("manualPengajuan").value.trim();
+
+if(manualInput === ""){
+
+alert("⚠️ Silakan isi kolom PENGAJUAN terlebih dahulu!");
+
+document.getElementById("manualPengajuan").focus();
+
+return;
+
+}
+
+exportExcelFinalBoss();
+
+setTimeout(()=>{
+exportPengajuanExcel();
+},700);
+
+setTimeout(()=>{
+exportExcelSelisih();
+},1400);
+
+}
+
+// ================= ANTI INSPECT =================
+
+document.addEventListener('contextmenu', function(e){
+e.preventDefault();
+});
+
+document.onkeydown = function(e){
+
+if(e.keyCode == 123){
+return false;
+}
+
+if(e.ctrlKey && e.shiftKey && e.keyCode == 73){
+return false;
+}
+
+if(e.ctrlKey && e.shiftKey && e.keyCode == 74){
+return false;
+}
+
+if(e.ctrlKey && e.keyCode == 85){
+return false;
+}
+
+if(e.ctrlKey && e.shiftKey && e.keyCode == 67){
+return false;
+}
+
+};
+
+(function(){
+
+function detectDevTools(){
+
+const start = new Date();
+
+debugger;
+
+const end = new Date();
+
+if(end - start > 100){
+
+document.body.innerHTML =
+"<h1 style='color:red;text-align:center;margin-top:100px;'>SECURITY BLOCKED</h1>";
+
+}
+
+}
+
+setInterval(detectDevTools,1000);
+
+})();
+
+</script>
+
+</body>
+</html>
+

@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Split Excel Modern PRO</title>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<style>
+* {box-sizing:border-box}
+
+body {
+  font-family:'Poppins',sans-serif;
+  background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+  margin:0;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  min-height:100vh;
+}
+
+.container {
+  width:100%;
+  max-width:1000px;
+  background:rgba(255,255,255,0.95);
+  padding:30px;
+  border-radius:25px;
+  box-shadow:0 20px 50px rgba(0,0,0,0.3);
+  text-align:center;
+}
+
+h2 {
+  margin-bottom:20px;
+  font-size:28px;
+  color:#2c5364;
+}
+
+.input-group {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:10px;
+}
+
+input[type="file"] {
+  padding:10px;
+  background:#f5f5f5;
+  border-radius:10px;
+  cursor:pointer;
+}
+
+input[type="number"] {
+  width:120px;
+  text-align:center;
+  font-size:16px;
+  border:1px solid #ddd;
+}
+
+.button-group {
+  margin-top:15px;
+  display:flex;
+  gap:10px;
+  justify-content:center;
+  flex-wrap:wrap;
+}
+
+button {
+  padding:12px 18px;
+  border:none;
+  border-radius:12px;
+  font-weight:600;
+  cursor:pointer;
+  transition:0.3s;
+  color:white;
+}
+
+.btn-preview {
+  background: linear-gradient(135deg,#f7971e,#ffd200);
+}
+
+.btn-download {
+  background: linear-gradient(135deg,#00c6ff,#0072ff);
+}
+
+/* TOMBOL KEMBALI */
+
+.btn-kembali{
+
+display:inline-flex;
+align-items:center;
+justify-content:center;
+
+padding:12px 22px;
+height:46px;
+
+border-radius:14px;
+
+font-weight:600;
+font-size:14px;
+letter-spacing:0.5px;
+
+text-decoration:none;
+color:white;
+
+background:
+linear-gradient(
+135deg,
+#8e2de2,
+#4a00e0,
+#00c6ff
+);
+
+background-size:300% 300%;
+
+box-shadow:
+0 8px 25px rgba(74,0,224,0.35),
+0 0 20px rgba(0,198,255,0.25);
+
+transition:0.35s ease;
+
+animation:glowMove 5s ease infinite;
+
+position:relative;
+overflow:hidden;
+
+}
+
+/* HOVER */
+
+.btn-kembali:hover{
+
+transform:translateY(-3px) scale(1.04);
+
+box-shadow:
+0 0 20px rgba(142,45,226,0.8),
+0 0 40px rgba(0,198,255,0.7),
+0 0 60px rgba(74,0,224,0.6);
+
+}
+
+/* EFEK KILAU */
+
+.btn-kembali::before{
+
+content:'';
+
+position:absolute;
+top:0;
+left:-120%;
+
+width:60%;
+height:100%;
+
+background:
+linear-gradient(
+120deg,
+transparent,
+rgba(255,255,255,0.7),
+transparent
+);
+
+transform:skewX(-25deg);
+
+transition:0.7s;
+
+}
+
+.btn-kembali:hover::before{
+
+left:130%;
+
+}
+
+/* ANIMASI */
+
+@keyframes glowMove{
+
+0%{
+background-position:0% 50%;
+}
+
+50%{
+background-position:100% 50%;
+}
+
+100%{
+background-position:0% 50%;
+}
+
+}
+
+button:hover {
+  transform:translateY(-2px);
+  box-shadow:0 8px 20px rgba(0,0,0,0.2);
+}
+
+.preview {
+  margin-top:25px;
+  max-height:400px;
+  overflow:auto;
+  border-radius:15px;
+  border:1px solid #ddd;
+}
+
+table {
+  border-collapse: collapse;
+  width:100%;
+  font-size:12px;
+}
+
+th, td {
+  border:1px solid #ccc;
+  padding:6px;
+}
+
+th {
+  position:sticky;
+  top:0;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <h2>🚀 Split Excel Modern PRO</h2>
+
+  <div class="input-group">
+    <input type="file" id="fileInput" accept=".xlsx">
+    <input type="number" id="jumlah" value="2" min="2">
+  </div>
+
+  <div class="button-group">
+  <button class="btn-preview" onclick="previewData()">Preview</button>
+  <button class="btn-download" onclick="proses()">Download</button>
+
+  <a href="index.html" class="btn-kembali">
+    ⮌ Kembali ke Home
+  </a>
+</div>
+
+  <div class="preview" id="preview"></div>
+</div>
+
+<script>
+let workbookGlobal;
+let sheetGlobal;
+let rangeGlobal;
+let namaFileAsli = "";
+
+// FORMAT 001
+function formatNumber(num, total) {
+  const length = total.toString().length;
+  return num.toString().padStart(length, '0');
+}
+
+function previewData() {
+  const file = document.getElementById("fileInput").files[0];
+  if (!file) return alert("Upload file dulu!");
+
+  // 🔥 ambil nama file & hapus kata terakhir
+  namaFileAsli = file.name.replace(".xlsx", "");
+  let parts = namaFileAsli.split(" ");
+  if (parts.length > 1) parts.pop();
+  namaFileAsli = parts.join(" ");
+
+  const reader = new FileReader();
+
+  reader.onload = function(e) {
+    const data = new Uint8Array(e.target.result);
+    workbookGlobal = XLSX.read(data, { type: "array", cellStyles: true });
+
+    sheetGlobal = workbookGlobal.Sheets[workbookGlobal.SheetNames[0]];
+    rangeGlobal = XLSX.utils.decode_range(sheetGlobal['!ref']);
+
+    renderTable();
+  };
+
+  reader.readAsArrayBuffer(file);
+}
+
+function renderTable() {
+  let html = "<table>";
+
+  for (let R = rangeGlobal.s.r; R <= rangeGlobal.e.r; ++R) {
+    html += "<tr>";
+
+    for (let C = rangeGlobal.s.c; C <= rangeGlobal.e.c; ++C) {
+      const ref = XLSX.utils.encode_cell({ r: R, c: C });
+      const cell = sheetGlobal[ref];
+
+      let value = cell ? cell.v : "";
+      let style = "";
+
+      if (R === 0) {
+        style += "background:#2c5364;color:white;text-align:center;font-weight:bold;";
+        html += `<th style="${style}">${value}</th>`;
+      } else {
+        html += `<td>${value}</td>`;
+      }
+    }
+
+    html += "</tr>";
+  }
+
+  html += "</table>";
+  document.getElementById("preview").innerHTML = html;
+}
+
+function getBorderStyle() {
+  return {
+    top: { style: "thin", color: { rgb: "000000" } },
+    bottom: { style: "thin", color: { rgb: "000000" } },
+    left: { style: "thin", color: { rgb: "000000" } },
+    right: { style: "thin", color: { rgb: "000000" } }
+  };
+}
+
+function proses() {
+
+  const jumlah = parseInt(document.getElementById("jumlah").value);
+
+  if (!sheetGlobal) {
+    return alert("Preview dulu!");
+  }
+
+  const totalRows = rangeGlobal.e.r;
+  const perFile = Math.ceil(totalRows / jumlah);
+
+  for (let i = 0; i < jumlah; i++) {
+
+    const newSheet = {};
+
+    const startRow = i * perFile + 1;
+    const endRow = Math.min(startRow + perFile - 1, totalRows);
+
+    // ===== MULAI DARI ROW 7 =====
+    const OFFSET_ROW = 6;
+
+    // ===== BORDER =====
+    const borderStyle = {
+      top: { style: "thin", color: { rgb: "000000" } },
+      bottom: { style: "thin", color: { rgb: "000000" } },
+      left: { style: "thin", color: { rgb: "000000" } },
+      right: { style: "thin", color: { rgb: "000000" } }
+    };
+
+    // ===== AUTO WIDTH =====
+    const maxWidth = [];
+
+    // ===== UKURAN CUSTOM =====
+    const customWidth = {
+      0: 8,     // NO
+      1: 26,    // AWB / RESI
+      2: 24,    // CODE COLY
+      3: 16,    // TGL MASUK
+      4: 38,    // PENGIRIM
+      5: 120    // ALAMAT
+    };
+
+    // ===== HEADER =====
+    for (let C = rangeGlobal.s.c; C <= rangeGlobal.e.c; C++) {
+
+      const oldAddr = XLSX.utils.encode_cell({
+        r: 0,
+        c: C
+      });
+
+      const newAddr = XLSX.utils.encode_cell({
+        r: OFFSET_ROW,
+        c: C
+      });
+
+      const cell = sheetGlobal[oldAddr];
+
+      if (cell) {
+
+        const value = cell.v || "";
+
+        newSheet[newAddr] = {
+
+          t: cell.t,
+          v: value,
+
+          s: {
+
+            font: {
+              bold: true,
+              sz: 12,
+              color: { rgb: "FFFFFF" },
+              name: "Arial"
+            },
+
+            fill: {
+              patternType: "solid",
+              fgColor: { rgb: "4472C4" }
+            },
+
+            alignment: {
+              horizontal: "center",
+              vertical: "center",
+              wrapText: true
+            },
+
+            border: borderStyle
+
+          }
+
+        };
+
+        maxWidth[C] = Math.max(
+          maxWidth[C] || 10,
+          String(value).length + 5
+        );
+
+      }
+
+    }
+
+    // ===== DATA =====
+    let newRow = OFFSET_ROW + 1;
+
+    for (let R = startRow; R <= endRow; R++) {
+
+      for (let C = rangeGlobal.s.c; C <= rangeGlobal.e.c; C++) {
+
+        const oldCell = XLSX.utils.encode_cell({
+          r: R,
+          c: C
+        });
+
+        const newCell = XLSX.utils.encode_cell({
+          r: newRow,
+          c: C
+        });
+
+        const cell = sheetGlobal[oldCell];
+
+        if (cell) {
+
+          let value = cell.v;
+          let type = cell.t;
+
+          // ===== STYLE DEFAULT =====
+          let style = {
+
+            font: {
+              name: "Arial",
+              sz: 11
+            },
+
+            alignment: {
+              horizontal: "center",
+              vertical: "center",
+              wrapText: true
+            },
+
+            border: borderStyle
+
+          };
+
+          // ===== FORMAT TANGGAL =====
+          if (
+            (
+              cell.t === "n" ||
+              cell.t === "d"
+            ) &&
+            cell.w &&
+            (
+              cell.w.includes("/") ||
+              cell.w.includes("-")
+            )
+          ) {
+
+            style.numFmt = "yyyy/mm/dd";
+
+          }
+
+          // ===== KOLOM ALAMAT =====
+          // ===== SEMUA RATA TENGAH =====
+style.alignment = {
+  horizontal: "center",
+  vertical: "center",
+  wrapText: true
+};
+
+          newSheet[newCell] = {
+
+            t: type,
+            v: value,
+            w: cell.w,
+
+            s: style
+
+          };
+
+          // ===== AUTO WIDTH =====
+          let panjang = String(cell.w || value || "").length;
+
+          if (panjang > 20) {
+            panjang += 10;
+          }
+
+          if (panjang > 50) {
+            panjang += 20;
+          }
+
+          if (!maxWidth[C] || panjang > maxWidth[C]) {
+            maxWidth[C] = panjang;
+          }
+
+        }
+
+      }
+
+      newRow++;
+
+    }
+
+    // ===== AUTO LEBAR KOLOM =====
+    const cols = [];
+
+    for (let C = rangeGlobal.s.c; C <= rangeGlobal.e.c; C++) {
+
+      let width;
+
+      if (customWidth[C]) {
+
+        width = customWidth[C];
+
+      } else {
+
+        width = Math.min(
+          120,
+          Math.max(
+            15,
+            (maxWidth[C] || 15) + 5
+          )
+        );
+
+      }
+
+      cols.push({
+        wch: width
+      });
+
+    }
+
+    newSheet['!cols'] = cols;
+
+    // ===== TINGGI ROW =====
+    newSheet['!rows'] = [];
+
+    for (let r = 0; r <= newRow; r++) {
+
+      // HEADER
+      if (r === OFFSET_ROW) {
+
+        newSheet['!rows'][r] = {
+          hpx: 40
+        };
+
+      } else {
+
+        newSheet['!rows'][r] = {
+          hpx: 34
+        };
+
+      }
+
+    }
+
+    // ===== RANGE =====
+    newSheet['!ref'] = XLSX.utils.encode_range({
+
+      s: {
+        r: 0,
+        c: rangeGlobal.s.c
+      },
+
+      e: {
+        r: newRow - 1,
+        c: rangeGlobal.e.c
+      }
+
+    });
+
+    // ===== WORKBOOK =====
+    const wb = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(
+      wb,
+      newSheet,
+      "Data"
+    );
+
+    // ===== NAMA FILE =====
+    const startNum = formatNumber(startRow, totalRows);
+    const endNum = formatNumber(endRow, totalRows);
+
+    const nomorFile = i + 1;
+
+    XLSX.writeFile(
+      wb,
+      `${nomorFile}. ${namaFileAsli} (${startNum} - ${endNum}).xlsx`
+    );
+
+  }
+
+  alert("Selesai!");
+
+}
+
+/* ===== ANTI INSPECT ===== */
+
+document.addEventListener('contextmenu', function(e){
+    e.preventDefault();
+});
+
+document.onkeydown = function(e){
+
+    // F12
+    if(e.keyCode == 123){
+        return false;
+    }
+
+    // CTRL + SHIFT + I
+    if(e.ctrlKey && e.shiftKey && e.keyCode == 73){
+        return false;
+    }
+
+    // CTRL + SHIFT + J
+    if(e.ctrlKey && e.shiftKey && e.keyCode == 74){
+        return false;
+    }
+
+    // CTRL + U
+    if(e.ctrlKey && e.keyCode == 85){
+        return false;
+    }
+
+    // CTRL + SHIFT + C
+    if(e.ctrlKey && e.shiftKey && e.keyCode == 67){
+        return false;
+    }
+
+};
+
+
+document.onselectstart = function(e){
+
+    if(e.target.closest("#listKantong")){
+        return true;
+    }
+
+    return false;
+};
+
+
+(function(){
+
+function detectDevTools(){
+
+    const start = new Date();
+
+    debugger;
+
+    const end = new Date();
+
+    if(end - start > 100){
+
+        document.body.innerHTML =
+        "<h1 style='color:red;text-align:center;margin-top:100px;'>SECURITY BLOCKED</h1>";
+
+    }
+
+}
+
+setInterval(detectDevTools,1000);
+
+})();
+
+// ===== KLIK NOMOR KANTONG AUTO COPY =====
+document.addEventListener("click", function(e){
+
+    if(e.target.tagName === "TD" && e.target.parentElement.parentElement.id === "listKantong"){
+
+        var teks = e.target.innerText;
+
+        navigator.clipboard.writeText(teks).then(function(){
+
+            // efek notifikasi kecil
+            e.target.style.background = "#00c896";
+
+            setTimeout(function(){
+                e.target.style.background = "";
+            },500);
+
+        });
+
+    }
+
+});
+
+
+</script>
+
+</body>
+</html>

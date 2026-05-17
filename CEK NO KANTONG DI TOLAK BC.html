@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cek No Kantong PRO</title>
+<script src="xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+
+<style>
+body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#0f172a,#1e293b);color:#fff;padding:20px}
+.container{max-width:1000px;margin:auto}
+.card{background:#1e293b;padding:20px;border-radius:15px;box-shadow:0 10px 30px rgba(0,0,0,0.5);margin-bottom:20px}
+h2{text-align:center}
+textarea{width:100%;height:120px;border-radius:10px;padding:10px;border:none;margin-top:10px}
+input,button{padding:10px;margin:5px;border-radius:8px;border:none}
+button{background:#22c55e;color:white;cursor:pointer}
+.progress{height:20px;background:#334155;border-radius:10px;overflow:hidden;margin-top:10px}
+.progress-bar{height:100%;width:0%;background:#22c55e}
+.stats{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-around;margin-top:10px}
+.stat{background:#0f172a;padding:10px;border-radius:10px;min-width:120px;text-align:center}
+table{width:100%;border-collapse:collapse;margin-top:20px;font-size:14px}
+th,td{padding:10px;border-bottom:1px solid #334155}
+th{background:#0f172a}
+.match{background:#ef4444}
+.ok{background:#22c55e22}
+
+/* TOMBOL KEMBALI */
+
+.btn-kembali{
+
+display:inline-flex;
+align-items:center;
+justify-content:center;
+
+padding:10px 20px;
+margin:5px;
+
+height:42px;
+
+border-radius:10px;
+
+font-size:14px;
+font-weight:600;
+letter-spacing:0.5px;
+
+text-decoration:none;
+color:white;
+
+background:
+linear-gradient(
+135deg,
+#7f00ff,
+#00c6ff,
+#22c55e
+);
+
+background-size:300% 300%;
+
+box-shadow:
+0 6px 20px rgba(0,198,255,0.35),
+0 0 20px rgba(127,0,255,0.25);
+
+transition:0.35s ease;
+
+animation:btnGlow 5s ease infinite;
+
+position:relative;
+overflow:hidden;
+
+}
+
+/* HOVER */
+
+.btn-kembali:hover{
+
+transform:translateY(-3px) scale(1.04);
+
+box-shadow:
+0 0 20px rgba(127,0,255,0.8),
+0 0 40px rgba(0,198,255,0.7),
+0 0 55px rgba(34,197,94,0.6);
+
+}
+
+/* EFEK KILAU */
+
+.btn-kembali{
+
+display:inline-flex;
+align-items:center;
+justify-content:center;
+
+padding:10px 16px;
+margin:5px;
+
+height:auto;
+
+border-radius:8px;
+
+font-size:14px;
+font-weight:600;
+
+text-decoration:none;
+color:white;
+
+background:
+linear-gradient(
+135deg,
+#7f00ff,
+#00c6ff,
+#22c55e
+);
+
+background-size:300% 300%;
+
+box-shadow:
+0 6px 20px rgba(0,198,255,0.35),
+0 0 20px rgba(127,0,255,0.25);
+
+transition:0.35s ease;
+
+animation:btnGlow 5s ease infinite;
+
+}
+}
+
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<div class="card">
+<h2>CEK NO KANTONG DI TOLAK BC</h2>
+
+<label>Paste No Kantong Pembanding / Tolak BC:</label>
+<textarea id="inputList" placeholder="Contoh:\nDWB2026021001\nDWB2026021101"></textarea>
+
+<input type="file" id="fileB">
+<br>
+<button onclick="proses()">PROSES</button>
+<button onclick="downloadExcel()">DOWNLOAD HASIL</button>
+
+<a href="index.html" class="btn-kembali">
+⮌ KEMBALI KE HOME
+</a>
+
+<div class="progress"><div class="progress-bar" id="bar"></div></div>
+
+<div class="stats">
+<div class="stat">TOTAL DATA: <span id="total">0</span></div>
+<div class="stat">DARI PASTE: <span id="totalPaste">0</span></div>
+<div class="stat">COCOK: <span id="match">0</span></div>
+<div class="stat">ERROR: <span id="error">0</span></div>
+<div class="stat">OK: <span id="ok">0</span></div>
+</div>
+</div>
+
+<div class="card">
+<table id="hasil">
+<thead>
+<tr>
+<th>NO KANTONG</th>
+<th>KETERANGAN</th>
+<th>KETERANGAN 2</th>
+<th>KETERANGAN 3</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</div>
+
+</div>
+
+<script>
+let dataB = [];
+let hasilExport = [];
+
+function readFile(file, callback){
+    const reader = new FileReader();
+    reader.onload = e => {
+        const data = new Uint8Array(e.target.result);
+        const wb = XLSX.read(data, {type:'array'});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        callback(XLSX.utils.sheet_to_json(ws,{header:1}));
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+fileB.onchange = e => readFile(e.target.files[0], res => dataB = res);
+
+function proses(){
+    const tbody = document.querySelector('#hasil tbody');
+    tbody.innerHTML='';
+    hasilExport=[];
+
+    let inputRaw = document.getElementById('inputList').value.split('\n');
+    let input = inputRaw.map(x=>x.trim()).filter(x=>x);
+
+    let total=0,error=0,ok=0,match=0;
+
+    dataB.forEach((row,i)=>{
+        if(i===0) return;
+        total++;
+
+        let no = row[0] ?? ''; 
+        let ket = row[1] ?? ''; 
+        let ket2 = row[2] ?? ''; 
+        let ket3 = row[3] ?? ''; 
+
+        let tr=document.createElement('tr');
+
+        if(no && input.includes(no)){
+            ket='ERROR KANTONG DI TOLAK BEA CUKAI';
+            tr.classList.add('match');
+            error++;
+            match++;
+        }else{
+            tr.classList.add('ok');
+            ok++;
+        }
+
+        tr.innerHTML=`<td>${no}</td><td>${ket}</td><td>${ket2}</td><td>${ket3}</td>`;
+        tbody.appendChild(tr);
+
+        hasilExport.push([no,ket,ket2,ket3]);
+
+        document.getElementById('bar').style.width=((total/dataB.length)*100)+'%';
+    });
+
+    document.getElementById('total').innerText=total;
+    document.getElementById('totalPaste').innerText=input.length;
+    document.getElementById('match').innerText=match;
+    document.getElementById('error').innerText=error;
+    document.getElementById('ok').innerText=ok;
+}
+
+function downloadExcel(){
+    let data = [
+        ['NO KANTONG','KETERANGAN','KETERANGAN 2','KETERANGAN 3']
+    ];
+
+    hasilExport.forEach(row => data.push(row));
+
+    let ws = XLSX.utils.aoa_to_sheet(data);
+
+    // tanda ERROR pakai simbol
+    hasilExport.forEach((row, i) => {
+        if(row[1] === 'ERROR KANTONG DI TOLAK BEA CUKAI'){
+            let cellRef = XLSX.utils.encode_cell({r: i+1, c: 1});
+            if(ws[cellRef]){
+                ws[cellRef].v = '❌ ' + ws[cellRef].v;
+            }
+        }
+    });
+
+    let wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Hasil');
+    XLSX.writeFile(wb, 'hasil_kantong.xlsx');
+}
+
+/* ===== ANTI INSPECT ===== */
+
+document.addEventListener('contextmenu', function(e){
+    e.preventDefault();
+});
+
+document.onkeydown = function(e){
+
+    // F12
+    if(e.keyCode == 123){
+        return false;
+    }
+
+    // CTRL + SHIFT + I
+    if(e.ctrlKey && e.shiftKey && e.keyCode == 73){
+        return false;
+    }
+
+    // CTRL + SHIFT + J
+    if(e.ctrlKey && e.shiftKey && e.keyCode == 74){
+        return false;
+    }
+
+    // CTRL + U
+    if(e.ctrlKey && e.keyCode == 85){
+        return false;
+    }
+
+    // CTRL + SHIFT + C
+    if(e.ctrlKey && e.shiftKey && e.keyCode == 67){
+        return false;
+    }
+
+};
+
+
+document.onselectstart = function(e){
+
+    if(e.target.closest("#listKantong")){
+        return true;
+    }
+
+    return false;
+};
+
+
+(function(){
+
+function detectDevTools(){
+
+    const start = new Date();
+
+    debugger;
+
+    const end = new Date();
+
+    if(end - start > 100){
+
+        document.body.innerHTML =
+        "<h1 style='color:red;text-align:center;margin-top:100px;'>SECURITY BLOCKED</h1>";
+
+    }
+
+}
+
+setInterval(detectDevTools,1000);
+
+})();
+
+// ===== KLIK NOMOR KANTONG AUTO COPY =====
+document.addEventListener("click", function(e){
+
+    if(e.target.tagName === "TD" && e.target.parentElement.parentElement.id === "listKantong"){
+
+        var teks = e.target.innerText;
+
+        navigator.clipboard.writeText(teks).then(function(){
+
+            // efek notifikasi kecil
+            e.target.style.background = "#00c896";
+
+            setTimeout(function(){
+                e.target.style.background = "";
+            },500);
+
+        });
+
+    }
+
+});
+
+
+</script>
+
+</body>
+</html>
