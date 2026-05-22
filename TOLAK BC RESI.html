@@ -403,8 +403,14 @@ opacity:1;
 
 <label class="label-title">UPLOAD FILE EXCEL</label>
 <input type="file" id="fileInput">
-
 <br><br>
+
+<label class="label-title">PENGAJUAN
+<input type="number" id="noPengajuan" placeholder="Contoh: 33">
+<br><br>
+
+
+
 
 <label class="label-title">PASTE AWB / RESI / CN YANG DI TOLAK BC</label>
 
@@ -451,6 +457,8 @@ let excelData=[]
 let header=[]
 let dataReject=[]
 let dataFix=[]
+let dataKantong=[]
+let noPengajuan = "";
 
 document.getElementById("fileInput").addEventListener("change",function(e){
 
@@ -492,6 +500,13 @@ const awbList=awbText.split(/\n|,|\s/).map(x=>x.trim()).filter(x=>x)
 
 let indexAWB=header.findIndex(h=>String(h).toUpperCase().includes("AWB"))
 
+noPengajuan = document.getElementById("noPengajuan").value;
+
+if(noPengajuan === "" || noPengajuan === null){
+    alert("FORM PENGAJUAN WAJIB DIISI!");
+    return;
+}
+
 if(indexAWB==-1){
 
 alert("Kolom AWB tidak ditemukan")
@@ -526,42 +541,89 @@ row[indexTgl]=`${y}/${m}/${da}`
 
 }
 
-// FORMAT HARGA
-if(indexHarga!=-1 && row[indexHarga]){
+// FORMAT HARGA (BARU SESUAI RULE)
+if(indexHarga != -1){
 
-let harga = String(row[indexHarga]).replace(/[^0-9]/g,'')
+let raw = row[indexHarga]
 
-// jika 1 digit → tambah 0000
-if(harga.length == 1){
-    harga = harga + "0000"
+// jika kosong atau 0
+if(!raw || String(raw).replace(/\D/g,'') === "0" || String(raw).trim() === ""){
+    row[indexHarga] = "10000"
+}else{
+
+    let harga = String(raw).replace(/[^0-9]/g,'')
+
+    // hitung panjang digit
+    let len = harga.length
+
+    // RULE:
+    // 1 digit -> tambah 4 nol
+    // 2 digit -> tambah 3 nol
+    // 3 digit -> tambah 2 nol
+    // 4 digit -> tambah 1 nol
+    // >4 digit tetap
+
+    if(len === 1){
+        harga = harga + "0000"
+    }
+    else if(len === 2){
+        harga = harga + "000"
+    }
+    else if(len === 3){
+        harga = harga + "00"
+    }
+    else if(len === 4){
+        harga = harga + "0"
+    }
+
+    row[indexHarga] = harga
 }
-
-// jika 2 digit → tambah 000
-else if(harga.length == 2){
-    harga = harga + "000"
-}
-
-// jika 3 digit → tambah 00
-else if(harga.length == 3){
-    harga = harga + "00"
-}
-
-// jika 4 digit → tambah 0
-else if(harga.length == 4){
-    harga = harga + "0"
-}
-
-row[indexHarga] = harga
-
 }
 
 let awb=row[indexAWB]
 
-if(awbList.includes(String(awb))){
+// CEK KOLOM KANTONG
+let indexKantong = -1
+
+header.forEach((h,i)=>{
+
+let txt = String(h).toUpperCase().trim()
+
+if(
+txt.includes("KANTONG") ||
+txt.includes("KARUNG") ||
+txt.includes("BAG") ||
+txt.includes("NO BAG") ||
+txt.includes("NO KANTONG")
+){
+indexKantong = i
+}
+
+})
+
+let kantong = ""
+
+if(indexKantong != -1){
+
+kantong = row[indexKantong]
+? String(row[indexKantong]).toUpperCase().trim()
+: ""
+
+}
+
+let isKantong =
+kantong.startsWith("DWB") ||
+kantong.startsWith("LOST")
+
+if(
+awbList.includes(
+String(awb).trim()
+)
+){
 
 dataReject.push(row)
 
-}else{
+}else if(!isKantong){
 
 dataFix.push(row)
 
@@ -600,13 +662,64 @@ alert("Data Fix dicopy")
 
 function exportReject(){
 
-exportExcel([header,...dataReject],"DATA_REJECT.xlsx")
+exportExcel([header,...dataReject],`DATA REJECT ${noPengajuan}.xlsx`)
 
 }
 
 function exportFix(){
 
-exportExcel([header,...dataFix],"DATA_FIX.xlsx")
+let dataDWBLOST = []
+let dataFixBersih = []
+
+// AMBIL DARI dataFix BUKAN excelData
+dataFix.forEach(row=>{
+
+// GABUNG SELURUH ISI ROW
+let seluruhRow = row
+.map(x => String(x || "").toUpperCase())
+.join(" ")
+
+// CEK DWB / LOST
+let isKantong =
+/DWB\d+/i.test(seluruhRow) ||
+/LOST\d+/i.test(seluruhRow)
+
+// MASUKKAN KE TABEL TERPISAH
+if(isKantong){
+
+dataDWBLOST.push(row)
+
+}else{
+
+dataFixBersih.push(row)
+
+}
+
+})
+
+/* =========================
+   EXPORT DATA FIX BERSIH
+========================= */
+
+exportExcel(
+[header,...dataFixBersih],
+`RETUR ${noPengajuan} FIX.xlsx`
+)
+
+/* =========================
+   EXPORT KHUSUS DWB LOST
+========================= */
+
+exportExcel(
+[header,...dataDWBLOST],
+`DATA_DWB_LOST ${noPengajuan}.xlsx`
+)
+
+alert(
+"EXPORT BERHASIL\n\n"+
+"1. DATA_FIX_BERSIH.xlsx\n"+
+"2. DATA_DWB_LOST.xlsx"
+)
 
 }
 
