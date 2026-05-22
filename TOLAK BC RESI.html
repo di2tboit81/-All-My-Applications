@@ -392,6 +392,53 @@ opacity:1;
 
 }
 
+.btn-center{
+display:flex;
+justify-content:center;
+align-items:center;
+gap:12px;
+flex-wrap:wrap;
+margin:20px 0;
+text-align:center;
+}
+
+.form-center label,
+.form-center .label-title{
+text-align:center;
+display:block;
+width:100%;
+}
+
+#noPengajuan{
+display:block;
+margin:0 auto;
+text-align:center;
+width:180px;
+padding:8px 10px;
+border-radius:8px;
+border:1px solid #ddd;
+}
+
+.form-pengajuan{
+text-align:center;
+margin:10px 0;
+}
+
+.form-pengajuan .label-title{
+color:#000 !important;
+font-weight:800;
+text-align:center;
+}
+
+.form-pengajuan input{
+text-align:center;
+font-weight:700;
+color:#000;
+padding:8px 12px;
+border-radius:8px;
+border:1px solid #ccc;
+}
+
 </style>
 </head>
 
@@ -399,18 +446,22 @@ opacity:1;
 
 <div class="container">
 
+<div class="form-center">
+
 <h1>PROSES DATA AWB/RESI/CN REJECT BEA CUKAI</h1>
 
+
+
 <label class="label-title">UPLOAD FILE EXCEL</label>
+<div style="text-align:center;">
 <input type="file" id="fileInput">
 <br><br>
 
-<label class="label-title">PENGAJUAN
-<input type="number" id="noPengajuan" placeholder="Contoh: 33">
-<br><br>
-
-
-
+<div class="form-pengajuan">
+    <div class="label-title">PENGAJUAN</div>
+    <input type="number" id="noPengajuan" placeholder="Contoh: 01">
+</div>
+<br>
 
 <label class="label-title">PASTE AWB / RESI / CN YANG DI TOLAK BC</label>
 
@@ -418,16 +469,86 @@ opacity:1;
 
 <br>
 
-<button class="btn-proses" onclick="prosesData()">PROSES DATA</button>
-<button class="btn-hapus" onclick="clearPaste()">HAPUS</button>
+<div class="btn-center">
+    <button class="btn-proses" onclick="prosesData()">PROSES DATA</button>
+    <button class="btn-hapus" onclick="clearPaste()">HAPUS</button>
 
-<a href="index.html" class="btn-kembali">
-⮌ KEMBALI KE HOME
-</a>
+    <a href="index.html" class="btn-kembali">
+        ⮌ KEMBALI KE HOME
+    </a>
+</div>
 
-<div class="info" id="info"></div>
+<!-- DASHBOARD INFO -->
+<div id="dashboard" style="
+display:flex;
+gap:10px;
+flex-wrap:wrap;
+margin-bottom:15px;
+">
+
+<div style="
+flex:1;
+min-width:160px;
+background:linear-gradient(45deg,#0f172a,#334155);
+color:white;
+padding:12px;
+border-radius:12px;
+box-shadow:0 8px 20px rgba(0,0,0,0.25);
+font-weight:600;
+">
+📁 TOTAL FILE<br>
+<span id="dashTotalFile">0</span>
+</div>
+
+<div style="
+flex:1;
+min-width:160px;
+background:linear-gradient(45deg,#1e3a8a,#2563eb);
+color:white;
+padding:12px;
+border-radius:12px;
+box-shadow:0 8px 20px rgba(0,0,0,0.25);
+font-weight:600;
+">
+📦 TOTAL FIX<br>
+<span id="dashFix">0</span>
+</div>
+
+<div style="
+flex:1;
+min-width:160px;
+background:linear-gradient(45deg,#dc2626,#ef4444);
+color:white;
+padding:12px;
+border-radius:12px;
+box-shadow:0 8px 20px rgba(0,0,0,0.25);
+font-weight:600;
+">
+❌ REJECT<br>
+<span id="dashReject">0</span>
+</div>
+
+<div style="
+flex:1;
+min-width:160px;
+background:linear-gradient(45deg,#ea580c,#f97316);
+color:white;
+padding:12px;
+border-radius:12px;
+box-shadow:0 8px 20px rgba(0,0,0,0.25);
+font-weight:600;
+">
+⚠️ DWB / LOST<br>
+<span id="dashDwb">0</span>
+</div>
+
+</div>
+
+
 
 <div class="result">
+
+
 
 <div class="box">
 <h3>DATA FIX</h3>
@@ -479,6 +600,8 @@ excelData=XLSX.utils.sheet_to_json(sheet,{header:1})
 
 header=excelData[0]
 excelData=excelData.slice(1)
+
+document.getElementById("dashTotalFile").innerText = excelData.length;
 
 document.getElementById("info").innerText=
 "DATA FILE : "+excelData.length+" | Reject : 0 | Fix : 0"
@@ -633,6 +756,35 @@ dataFix.push(row)
 
 document.getElementById("rejectData").value=dataReject.map(r=>r.join("\t")).join("\n")
 document.getElementById("fixData").value=dataFix.map(r=>r.join("\t")).join("\n")
+
+// HITUNG DWB / LOST
+let dwbLost = 0;
+
+function cekDwb(row){
+    let text = row.join(" ").toUpperCase();
+
+    return /DWB\d+/i.test(text) ||
+           /LOST\d+/i.test(text);
+}
+
+dataFix.forEach(r=>{
+    if(cekDwb(r)) dwbLost++;
+});
+
+dataReject.forEach(r=>{
+    if(cekDwb(r)) dwbLost++;
+});
+
+// HITUNG FIX BERSIH (dikurangi DWB/LOST)
+let fixBersih = dataFix.length - dwbLost;
+
+// jangan sampai minus
+if(fixBersih < 0) fixBersih = 0;
+
+// UPDATE DASHBOARD
+document.getElementById("dashFix").innerText = fixBersih;
+document.getElementById("dashReject").innerText = dataReject.length;
+document.getElementById("dashDwb").innerText = dwbLost;
 
 document.getElementById("info").innerText=
 "TOTAL FILE : "+excelData.length+
