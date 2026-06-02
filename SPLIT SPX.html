@@ -319,6 +319,8 @@ function getBorderStyle() {
 
 function proses() {
 
+  console.log("PROSES START"); // 👈 taruh di sini
+
   const jumlah = parseInt(document.getElementById("jumlah").value);
 
   if (!sheetGlobal) {
@@ -376,7 +378,7 @@ function proses() {
 
       if (cell) {
 
-        const value = cell.v || "";
+        const value = forceCleanCell(cell.v);
 
         newSheet[newAddr] = {
 
@@ -389,7 +391,7 @@ function proses() {
               bold: true,
               sz: 12,
               color: { rgb: "FFFFFF" },
-              name: "Arial"
+              name: "Calibri"
             },
 
             fill: {
@@ -438,27 +440,34 @@ function proses() {
         const cell = sheetGlobal[oldCell];
 
         if (cell) {
+		
+		const headerRow = 0;
 
-          let value = cell.v;
-          let type = cell.t;
+const getHeader = (c) => {
+  const addr = XLSX.utils.encode_cell({ r: headerRow, c });
+  const h = sheetGlobal[addr];
+  return h ? String(h.v).toLowerCase() : "";
+};
+
+        
+let type = "s"; // paksa string biar tidak jadi simbol
 
           // ===== STYLE DEFAULT =====
           let style = {
 
-            font: {
-              name: "Arial",
-              sz: 11
-            },
+  font: {
+    name: "Calibri",
+    sz: 11
+  },
 
-            alignment: {
-              horizontal: "center",
-              vertical: "center",
-              wrapText: true
-            },
+  alignment: {
+    horizontal: "center",
+    vertical: "center",
+    wrapText: true
+  },
 
-            border: borderStyle
-
-          };
+  border: borderStyle
+};
 
           // ===== FORMAT TANGGAL =====
           if (
@@ -477,26 +486,41 @@ function proses() {
 
           }
 
-          // ===== KOLOM ALAMAT =====
-          // ===== SEMUA RATA TENGAH =====
+        
 style.alignment = {
   horizontal: "center",
   vertical: "center",
   wrapText: true
 };
 
-          newSheet[newCell] = {
+let cleanValue = forceCleanCell(cell.v);
 
-            t: type,
-            v: value,
-            w: cell.w,
+// ===== DETEKSI KOLOM =====
+const headerName = getHeader(C);
 
-            s: style
+const isPengirim = headerName.includes("pengirim");
+const isPenerima = headerName.includes("penerima");
 
-          };
+// ===== REPLACE JIKA ERROR "....." atau "????" =====
+if (/(\.{3,}|\?{3,})/.test(cleanValue)) {
+
+  if (isPenerima) {
+    cleanValue = "STORE_BATAM";
+  }
+
+  if (isPengirim) {
+    cleanValue = "STORE_ONLINE";
+  }
+}
+
+newSheet[newCell] = {
+  t: "s",
+  v: cleanValue,
+  s: style
+};
 
           // ===== AUTO WIDTH =====
-          let panjang = String(cell.w || value || "").length;
+          let panjang = String(cleanValue || "").length;
 
           if (panjang > 20) {
             panjang += 10;
@@ -595,6 +619,8 @@ style.alignment = {
       "Data"
     );
 
+console.log("WB READY", wb); // 👈 taruh di sini
+
     // ===== NAMA FILE =====
     const startNum = formatNumber(startRow, totalRows);
     const endNum = formatNumber(endRow, totalRows);
@@ -610,6 +636,38 @@ style.alignment = {
 
   alert("Selesai!");
 
+}
+
+function safeText(v) {
+  if (v === null || v === undefined) return "";
+
+  return String(v)
+    .normalize("NFKC")                 // rapikan unicode global
+    .replace(/\uFFFD/g, "")           // remove □ replacement char
+    .replace(/[\u200B-\u200D\uFEFF\u2060]/g, "") // invisible chars
+    .replace(/[\u0000-\u001F\u007F-\u009F]/g, "") // control ASCII
+    .replace(/[\u202A-\u202E]/g, "")  // bidi text (biar tidak kebalik)
+    .replace(/\p{C}/gu, "")           // FULL control unicode cleanup
+    .replace(/\s+/g, " ")             // rapikan spasi berlebihan
+    .trim();
+}
+
+function forceCleanCell(v) {
+  let text = safeText(v);
+
+  return text
+    // hapus emoji
+    .replace(/\p{Extended_Pictographic}/gu, "")
+
+    // hapus symbol tertentu saja (lebih aman dari \u2600-\u27BF terlalu luas)
+    .replace(/[\u200B-\u200D\uFEFF\u2060]/g, "")
+
+    // JANGAN hapus underscore, dan izinkan unicode letter/number
+    .replace(/[^\p{L}\p{N}\s.,\/\-()&:;_@]/gu, "")
+
+    // rapikan spasi
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 /* ===== ANTI INSPECT ===== */
