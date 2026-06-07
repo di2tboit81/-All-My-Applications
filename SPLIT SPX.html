@@ -501,16 +501,35 @@ const headerName = getHeader(C);
 const isPengirim = headerName.includes("pengirim");
 const isPenerima = headerName.includes("penerima");
 
-// ===== REPLACE JIKA ERROR "....." atau "????" =====
-if (/(\.{3,}|\?{3,})/.test(cleanValue)) {
+// ===== CEK DATA INVALID =====
+const valueCheck = String(cleanValue || "")
+.trim()
+.toLowerCase();
 
-  if (isPenerima) {
-    cleanValue = "STORE_BATAM";
-  }
+const invalidValue =
 
-  if (isPengirim) {
-    cleanValue = "STORE_ONLINE";
-  }
+    valueCheck === "" ||
+    valueCheck === "null" ||
+    valueCheck === "undefined" ||
+    valueCheck === "n/a" ||
+    valueCheck === "na" ||
+
+    /^\.+$/.test(valueCheck) ||      // ......
+    /^\?+$/.test(valueCheck) ||      // ??????
+    /^_+$/.test(valueCheck) ||       // ______
+    /^-+$/.test(valueCheck);         // ------
+
+// ===== GANTI OTOMATIS =====
+if (invalidValue) {
+
+    if (isPengirim) {
+        cleanValue = "STORE_ONLINE";
+    }
+
+    if (isPenerima) {
+        cleanValue = "STORE_BATAM";
+    }
+
 }
 
 newSheet[newCell] = {
