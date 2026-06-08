@@ -501,6 +501,41 @@ const headerName = getHeader(C);
 const isPengirim = headerName.includes("pengirim");
 const isPenerima = headerName.includes("penerima");
 
+// ===== FILTER KHUSUS PENGIRIM & PENERIMA =====
+if (isPengirim || isPenerima) {
+
+    cleanValue = String(cleanValue)
+        .replace(/_/g, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+        .toUpperCase();
+
+    // ===== CEK JIKA HANYA BERISI ANGKA 0 =====
+    const hanyaNol =
+        /^0+$/.test(cleanValue);
+
+    // ===== CEK JIKA HANYA BERISI TANDA BACA =====
+    const hanyaSimbol =
+        /^[^A-Z0-9]+$/i.test(cleanValue);
+
+    if (hanyaNol || hanyaSimbol) {
+
+        if (isPengirim) {
+            cleanValue = "ONLINE_STORE";
+        }
+
+        if (isPenerima) {
+            cleanValue = "BATAM_STORE";
+        }
+
+    }
+
+    // Pastikan hasil akhir tetap huruf besar
+    cleanValue = cleanValue.toUpperCase();
+
+}
+
+
 // ===== CEK DATA INVALID =====
 const valueCheck = String(cleanValue || "")
 .trim()
