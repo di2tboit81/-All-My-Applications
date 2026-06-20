@@ -1054,38 +1054,82 @@ let manualText = document.getElementById("manualPengajuan").value.trim();
 
 let pengajuanRow = 10;
 
-let cellPengajuan = XLSX.utils.encode_cell({r:pengajuanRow,c:colAwal});
-
-ws[cellPengajuan] = {
-v:manualText ? manualText.toUpperCase() : ("PENGAJUAN " + totalPengajuan),
-t:"s",
-s:stylePengajuan
+// Kolom kiri (kuning)
+ws[XLSX.utils.encode_cell({
+    r:pengajuanRow,
+    c:colAwal
+})] = {
+    v: manualText ? manualText.toUpperCase() : "PENGAJUAN",
+    t:"s",
+    s:stylePengajuan
 };
 
-merges.push({
-s:{r:pengajuanRow,c:colAwal},
-e:{r:pengajuanRow,c:colAwal+1}
-});
+// Kolom kanan (biru)
+ws[XLSX.utils.encode_cell({
+    r:pengajuanRow,
+    c:colAwal+1
+})] = {
+    v: totalPengajuan,
+    t:"n",
+    s:{
+        font:{bold:true},
+        fill:{fgColor:{rgb:"00B0F0"}},
+        alignment:{
+            horizontal:"center",
+            vertical:"center"
+        },
+        border:border
+    }
+};
 
 }
 
 let totalKantong = dataList.length;
+
 let totalKantongRow = 12;
 
-let cellTotalKantong = XLSX.utils.encode_cell({r:totalKantongRow,c:0});
+let cellTotalKantong = XLSX.utils.encode_cell({
+    r:totalKantongRow,
+    c:0
+});
 
 ws[cellTotalKantong] = {
-v:"JUMLAH KANTONG : " + totalKantong + " KANTONG",
-t:"s",
-s:{
-font:{bold:true,sz:16,color:{rgb:"000000"}},
-alignment:{horizontal:"left",vertical:"center"}
-}
+    v:"JUMLAH KANTONG : " + totalKantong + " KANTONG",
+    t:"s",
+    s:{
+        font:{bold:true,sz:16,color:{rgb:"000000"}},
+        alignment:{horizontal:"left",vertical:"center"}
+    }
+};
+
+// ===== TAMBAHAN BARU =====
+
+let totalCN = dataList.reduce((a,b)=>a+b.total,0);
+
+let cellTotalCN = XLSX.utils.encode_cell({
+    r:14,
+    c:0
+});
+
+ws[cellTotalCN] = {
+    v:"JUMLAH CN / ITEM : " + totalCN + " CN / ITEM",
+    t:"s",
+    s:{
+        font:{
+            bold:true,
+            sz:16,
+            color:{rgb:"000000"}
+        },
+        alignment:{
+            horizontal:"left",
+            vertical:"center"
+        }
+    }
 };
 
 ws["!ref"] = XLSX.utils.encode_range({
 s:{r:0,c:0},
-e:{r:13,c:(totalBlok*2)}
+e:{r:16,c:(totalBlok*2)}
 });
 
 ws["!merges"] = merges;
