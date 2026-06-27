@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>RESI CHECKER PRO</title>
+<title>RESI CHECKER B@-IT</title>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
@@ -560,29 +560,35 @@ header:1,
 defval:""
 });
 
-rows.forEach(row=>{
+// Cari posisi header
+const header = rows[0].map(h => String(h).trim().toUpperCase());
 
-row.forEach(cell=>{
+const idxKantong = header.findIndex(h => h.includes("KANTONG"));
+const idxResi = header.findIndex(h => h.includes("RESI"));
 
-let value=String(cell).trim();
+for(let i=1;i<rows.length;i++){
 
-if(value){
+    const row = rows[i];
 
-totalData++;
+    const kantong = idxKantong>=0 ? String(row[idxKantong] || "").trim() : "";
+    const resi = idxResi>=0 ? String(row[idxResi] || "").trim() : "";
 
-if(!databaseResi[value]){
-databaseResi[value]=[];
+    if(!resi) continue;
+
+    totalData++;
+
+    if(!databaseResi[resi]){
+        databaseResi[resi]=[];
+    }
+
+    const info = kantong
+        ? `${sheetName} (${kantong})`
+        : sheetName;
+
+    if(!databaseResi[resi].includes(info)){
+        databaseResi[resi].push(info);
+    }
 }
-
-if(!databaseResi[value].includes(sheetName)){
-databaseResi[value].push(sheetName);
-}
-
-}
-
-});
-
-});
 
 });
 
@@ -629,6 +635,8 @@ let status="";
 let sheet="";
 
 if(databaseResi[resi]){
+
+console.log(databaseResi[resi]);
 
 status="ADA";
 sheet=databaseResi[resi].join(", ");
