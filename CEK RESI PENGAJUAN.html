@@ -139,81 +139,137 @@ border:none;
 }
 
 .stats .card:nth-child(1){
-background:
-linear-gradient(
-135deg,
-#2563eb,
-#60a5fa
-);
+background:linear-gradient(135deg,#2563eb,#60a5fa,#93c5fd);
+box-shadow:0 10px 25px rgba(37,99,235,.45);
 }
 
 .stats .card:nth-child(2){
-background:
-linear-gradient(
-135deg,
-#f59e0b,
-#facc15
-);
+background:linear-gradient(135deg,#7c3aed,#a855f7,#c084fc);
+box-shadow:0 10px 25px rgba(124,58,237,.45);
 }
 
 .stats .card:nth-child(3){
-background:
-linear-gradient(
-135deg,
-#22c55e,
-#16a34a
-);
+background:linear-gradient(135deg,#059669,#10b981,#34d399);
+box-shadow:0 10px 25px rgba(16,185,129,.45);
 }
 
 .stats .card:nth-child(4){
-background:
-linear-gradient(
-135deg,
-#ef4444,
-#f97316
-);
+background:linear-gradient(135deg,#dc2626,#ef4444,#fb7185);
+box-shadow:0 10px 25px rgba(239,68,68,.45);
+}
+
+.stats .card:nth-child(5){
+background:linear-gradient(135deg,#14b8a6,#2dd4bf,#5eead4);
+box-shadow:0 10px 25px rgba(20,184,166,.45);
+}
+
+.stats .card:nth-child(6){
+background:linear-gradient(135deg,#f59e0b,#fbbf24,#fde047);
+box-shadow:0 10px 25px rgba(245,158,11,.45);
+}
+
+.stats .card:nth-child(7){
+background:linear-gradient(135deg,#ea580c,#fb923c,#fdba74);
+box-shadow:0 10px 25px rgba(234,88,12,.45);
+}
+
+.stats .card:nth-child(8){
+background:linear-gradient(135deg,#be123c,#e11d48,#fb7185);
+box-shadow:0 10px 25px rgba(225,29,72,.45);
 }
 
 .card:hover{
 
 transform:
-translateY(-10px)
-scale(1.05);
+translateY(-8px)
+scale(1.06);
+
+filter:brightness(1.12);
 
 box-shadow:
-0 0 20px rgba(255,255,255,.3),
-0 0 40px rgba(255,255,255,.2),
-0 20px 50px rgba(0,0,0,.4);
+0 0 20px rgba(255,255,255,.35),
+0 0 40px rgba(255,255,255,.20),
+0 20px 45px rgba(0,0,0,.45);
 
 }
 
 .card h2{
-font-size:34px;
-font-weight:800;
-color:white;
+font-size:42px;
+font-weight:900;
+color:#fff;
+letter-spacing:1px;
 
 text-shadow:
-0 0 10px rgba(255,255,255,.8),
-0 0 20px rgba(255,255,255,.5),
-0 0 30px rgba(255,255,255,.3);
+0 0 8px rgba(255,255,255,.9),
+0 0 20px rgba(255,255,255,.6);
 }
 
 .card p{
 margin-top:10px;
-color:#cbd5e1;
+font-size:17px;
+font-weight:900;
+color:#ffffff;
+text-transform:uppercase;
+letter-spacing:1px;
+text-shadow:0 2px 8px rgba(0,0,0,.45);
 }
 
 textarea{
-width:100%;
-height:180px;
-background:#1e293b;
+
+width:65%;
+max-width:750px;
+min-width:500px;
+height:260px;
+
+display:block;
+margin:25px auto;
+
+padding:25px;
+
 border:none;
+border-radius:25px;
+
+background:rgba(255,255,255,.08);
+
+backdrop-filter:blur(18px);
+
+color:#ffffff;
+
+font-size:18px;
+font-weight:700;
+
+text-align:center;
+
+line-height:1.9;
+
+letter-spacing:.5px;
+
+resize:vertical;
+
 outline:none;
-border-radius:15px;
-padding:15px;
-color:white;
-font-size:15px;
-margin-bottom:20px;
+
+box-shadow:
+0 10px 30px rgba(0,0,0,.35),
+0 0 25px rgba(99,102,241,.25);
+
+transition:.35s;
+
+}
+
+textarea:focus{
+
+background:rgba(255,255,255,.12);
+
+transform:translateY(-4px);
+
+box-shadow:
+
+0 15px 40px rgba(99,102,241,.45),
+
+0 0 30px rgba(168,85,247,.35),
+
+0 0 60px rgba(34,197,94,.25);
+
 }
 
 .buttons{
@@ -429,6 +485,50 @@ transform:translateY(0);
 
 }
 
+.resi-box{
+
+width:100%;
+
+display:flex;
+
+flex-direction:column;
+
+align-items:center;
+
+margin:35px 0;
+
+}
+
+.resi-box h2{
+
+font-size:28px;
+
+font-weight:900;
+
+color:#ffffff;
+
+margin-bottom:10px;
+
+letter-spacing:1px;
+
+text-shadow:
+
+0 0 20px rgba(99,102,241,.8);
+
+}
+
+.resi-box p{
+
+color:#d1d5db;
+
+font-size:15px;
+
+margin-bottom:20px;
+
+font-weight:600;
+
+}
+
 </style>
 </head>
 <body>
@@ -437,7 +537,7 @@ transform:translateY(0);
 
 <div class="header">
 <h1>📦 RESI CHECKER B@-IT</h1>
-<p>Cek nomor resi pada seluruh sheet Excel dengan cepat</p>
+<p>Cek Nomor Resi Pada Seluruh Data Pengajuan Dengan Cepat</p>
 </div>
 
 <label for="excelFile">
@@ -472,10 +572,49 @@ transform:translateY(0);
 <p>Tidak Ditemukan</p>
 </div>
 
+<div class="card">
+<h2 id="normalCount">0</h2>
+<p>🟢 Resi Normal</p>
 </div>
 
-<textarea id="resiInput"
-placeholder="Masukkan nomor resi satu per baris..."></textarea>
+<div class="card">
+<h2 id="doubleCount">0</h2>
+<p>🟡 Resi Double</p>
+</div>
+
+<div class="card">
+<h2 id="tripleCount">0</h2>
+<p>🟠 Resi Triple</p>
+</div>
+
+<div class="card">
+<h2 id="moreCount">0</h2>
+<p>🔴 Resi >3 Sheet</p>
+</div>
+
+</div>
+
+<div class="resi-box">
+
+<h2>
+📦 MASUKKAN NOMOR RESI
+</h2>
+
+<p>
+Tempel nomor resi di bawah ini (1 resi per baris)
+</p>
+
+<textarea
+id="resiInput"
+placeholder="Contoh :
+
+SPXID1234567890
+
+SPXID1234567891
+
+SPXID1234567892"></textarea>
+
+</div>
 
 <div class="buttons">
 <button class="btn-primary" onclick="cekResi()">
@@ -505,10 +644,11 @@ placeholder="Masukkan nomor resi satu per baris..."></textarea>
 
 <thead>
 <tr>
-<th>No</th>
-<th>Nomor Resi</th>
-<th>Status</th>
-<th>Ditemukan Pada Sheet</th>
+<th>N0</th>
+<th>NOMOR RESI</th>
+<th>STATUS</th>
+<th>JUMLAH</th>
+<th>DI TEMUKAN PADA PENGAJUAN</th>
 </tr>
 </thead>
 
@@ -628,6 +768,10 @@ hasilExport=[];
 
 let ditemukan=0;
 let tidakDitemukan=0;
+let normalData=0;
+let doubleData=0;
+let tripleData=0;
+let moreData=0;
 
 input.forEach((resi,index)=>{
 
@@ -640,6 +784,26 @@ console.log(databaseResi[resi]);
 
 status="ADA";
 sheet=databaseResi[resi].join(", ");
+
+const jumlahSheet=databaseResi[resi].length;
+
+if(jumlahSheet==1){
+
+normalData++;
+
+}else if(jumlahSheet==2){
+
+doubleData++;
+
+}else if(jumlahSheet==3){
+
+tripleData++;
+
+}else{
+
+moreData++;
+
+}
 
 ditemukan++;
 
@@ -656,6 +820,9 @@ hasilExport.push({
 No:index+1,
 Resi:resi,
 Status:status,
+Jumlah:databaseResi[resi]
+?databaseResi[resi].length
+:0,
 Sheet:sheet
 });
 
@@ -668,10 +835,23 @@ document.getElementById("progressBar")
 
 hasilExport.sort((a,b)=>{
 
+// ADA selalu di atas
 if(a.Status==="ADA" && b.Status==="TIDAK ADA") return -1;
-
 if(a.Status==="TIDAK ADA" && b.Status==="ADA") return 1;
 
+// Jika sama-sama ADA, urutkan berdasarkan jumlah sheet (terbanyak di atas)
+if(a.Status==="ADA" && b.Status==="ADA"){
+
+const jumlahA = a.Sheet === "-" ? 0 : a.Sheet.split(", ").length;
+const jumlahB = b.Sheet === "-" ? 0 : b.Sheet.split(", ").length;
+
+if(jumlahA !== jumlahB){
+return jumlahB - jumlahA;
+}
+
+}
+
+// Jika jumlah sama, pertahankan urutan input
 return 0;
 
 });
@@ -680,8 +860,28 @@ tbody.innerHTML="";
 
 hasilExport.forEach((item,index)=>{
 
+let warna="";
+
+if(item.Jumlah>=4){
+
+warna="#7f1d1d";
+
+}else if(item.Jumlah==3){
+
+warna="#9a3412";
+
+}else if(item.Jumlah==2){
+
+warna="#854d0e";
+
+}else if(item.Jumlah==1){
+
+warna="#14532d";
+
+}
+
 tbody.innerHTML+=`
-<tr>
+<tr style="background:${warna}">
 <td>${index+1}</td>
 <td>${item.Resi}</td>
 <td class="${
@@ -691,6 +891,7 @@ item.Status=="ADA"
 }">
 ${item.Status}
 </td>
+<td>${item.Jumlah||0}</td>
 <td>${item.Sheet}</td>
 </tr>
 `;
@@ -702,6 +903,18 @@ document.getElementById("foundCount")
 
 document.getElementById("notFoundCount")
 .innerText=tidakDitemukan;
+
+document.getElementById("doubleCount").innerText=doubleData;
+
+document.getElementById("tripleCount").innerText=tripleData;
+
+document.getElementById("normalCount").innerText=normalData;
+
+document.getElementById("doubleCount").innerText=doubleData;
+
+document.getElementById("tripleCount").innerText=tripleData;
+
+document.getElementById("moreCount").innerText=moreData;
 
 let msg=document.getElementById("message");
 
