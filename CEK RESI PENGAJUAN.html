@@ -8,6 +8,10 @@
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
+<script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/file-saver/dist/FileSaver.min.js"></script>
+
 <style>
 
 *{
@@ -441,6 +445,8 @@ padding:15px;
 td{
 padding:12px;
 border-bottom:1px solid #334155;
+text-align:center;
+vertical-align:middle;
 }
 
 .status-found{
@@ -782,10 +788,16 @@ if(databaseResi[resi]){
 
 console.log(databaseResi[resi]);
 
-status="ADA";
-sheet=databaseResi[resi].join(", ");
+sheet = databaseResi[resi].join(", ");
 
-const jumlahSheet=databaseResi[resi].length;
+const jumlahSheet = databaseResi[resi].length;
+
+// STATUS BARU
+if(jumlahSheet === 1){
+    status = "RESI NORMAL";
+}else{
+    status = "RESI DOUBLE " + jumlahSheet;
+}
 
 if(jumlahSheet==1){
 
@@ -835,12 +847,13 @@ document.getElementById("progressBar")
 
 hasilExport.sort((a,b)=>{
 
-// ADA selalu di atas
-if(a.Status==="ADA" && b.Status==="TIDAK ADA") return -1;
-if(a.Status==="TIDAK ADA" && b.Status==="ADA") return 1;
+const adaA = a.Status !== "TIDAK ADA";
+const adaB = b.Status !== "TIDAK ADA";
 
-// Jika sama-sama ADA, urutkan berdasarkan jumlah sheet (terbanyak di atas)
-if(a.Status==="ADA" && b.Status==="ADA"){
+if(adaA && !adaB) return -1;
+if(!adaA && adaB) return 1;
+
+if(adaA && adaB){
 
 const jumlahA = a.Sheet === "-" ? 0 : a.Sheet.split(", ").length;
 const jumlahB = b.Sheet === "-" ? 0 : b.Sheet.split(", ").length;
@@ -880,19 +893,29 @@ warna="#14532d";
 
 }
 
-tbody.innerHTML+=`
+tbody.innerHTML += `
 <tr style="background:${warna}">
-<td>${index+1}</td>
-<td>${item.Resi}</td>
-<td class="${
-item.Status=="ADA"
-?"status-found"
-:"status-not"
-}">
-${item.Status}
-</td>
-<td>${item.Jumlah||0}</td>
-<td>${item.Sheet}</td>
+    <td style="text-align:center;vertical-align:middle;">${index+1}</td>
+
+    <td style="text-align:center;vertical-align:middle;">
+        ${item.Resi}
+    </td>
+
+    <td class="${
+        item.Status!="TIDAK ADA"
+        ? "status-found"
+        : "status-not"
+    }" style="text-align:center;vertical-align:middle;">
+        ${item.Status}
+    </td>
+
+    <td style="text-align:center;vertical-align:middle;">
+        ${item.Jumlah||0}
+    </td>
+
+    <td style="text-align:center;vertical-align:middle;">
+        ${item.Sheet}
+    </td>
 </tr>
 `;
 
@@ -939,32 +962,145 @@ msg.style.display="block";
 
 }
 
-function exportExcel(){
+async function exportExcel(){
 
-if(hasilExport.length===0){
+    if(hasilExport.length===0){
+        alert("Belum ada hasil untuk diexport!");
+        return;
+    }
 
-alert("Belum ada hasil untuk diexport!");
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Hasil Cek Resi");
 
-return;
+    worksheet.columns = [
+        { header:"NO", width:8 },
+        { header:"NOMOR RESI", width:28 },
+        { header:"STATUS", width:20 },
+        { header:"JUMLAH", width:12 },
+        { header:"DI TEMUKAN PADA PENGAJUAN", width:75 }
+    ];
 
-}
+    hasilExport.forEach(item=>{
+        worksheet.addRow([
+            item.No,
+            item.Resi,
+            item.Status,
+            item.Jumlah,
+            item.Sheet
+        ]);
+    });
 
-let ws=XLSX.utils.json_to_sheet(
-hasilExport
-);
+    // =========================
+    // HEADER
+    // =========================
+    const header = worksheet.getRow(1);
 
-let wb=XLSX.utils.book_new();
+    header.height = 28;
 
-XLSX.utils.book_append_sheet(
-wb,
-ws,
-"Hasil Cek"
-);
+    header.eachCell(cell=>{
 
-XLSX.writeFile(
-wb,
-"Hasil_Cek_Resi.xlsx"
-);
+        cell.font={
+            bold:true,
+            color:{argb:'FFFFFFFF'},
+            size:12
+        };
+
+        cell.fill={
+            type:'pattern',
+            pattern:'solid',
+            fgColor:{argb:'FF4F81BD'}
+        };
+
+        cell.alignment={
+            horizontal:'center',
+            vertical:'middle'
+        };
+
+        cell.border={
+            top:{style:'thin'},
+            left:{style:'thin'},
+            bottom:{style:'thin'},
+            right:{style:'thin'}
+        };
+
+    });
+
+    // =========================
+    // ISI DATA
+    // =========================
+    worksheet.eachRow((row,rowNumber)=>{
+
+        if(rowNumber===1) return;
+
+        row.height=22;
+
+        row.eachCell(cell=>{
+
+            cell.alignment={
+                horizontal:'center',
+                vertical:'middle',
+                wrapText:true
+            };
+
+            cell.border={
+                top:{style:'thin'},
+                left:{style:'thin'},
+                bottom:{style:'thin'},
+                right:{style:'thin'}
+            };
+
+        });
+
+        // Warna berdasarkan jumlah
+        const jumlah=row.getCell(4).value;
+
+        let warna='FFFFFFFF';
+
+        if(jumlah>=4){
+            warna='FFFFC7CE'; // merah muda
+        }else if(jumlah==3){
+            warna='FFFCE4D6'; // oranye muda
+        }else if(jumlah==2){
+            warna='FFFFF2CC'; // kuning
+        }else if(jumlah==1){
+            warna='FFE2F0D9'; // hijau muda
+        }
+
+        row.eachCell(cell=>{
+            cell.fill={
+                type:'pattern',
+                pattern:'solid',
+                fgColor:{argb:warna}
+            };
+        });
+
+    });
+
+    // Auto Filter
+    worksheet.autoFilter={
+        from:'A1',
+        to:'E1'
+    };
+
+    // Freeze Header
+    worksheet.views=[
+        {
+            state:'frozen',
+            ySplit:1
+        }
+    ];
+
+    const buffer=await workbook.xlsx.writeBuffer();
+
+    saveAs(
+        new Blob(
+            [buffer],
+            {
+                type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            }
+        ),
+        'Hasil_Cek_Resi.xlsx'
+    );
 
 }
 
