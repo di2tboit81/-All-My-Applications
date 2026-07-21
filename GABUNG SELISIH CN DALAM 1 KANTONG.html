@@ -859,7 +859,12 @@ XLSX.utils.book_append_sheet(wb,ws,"FINAL BOSS");
 
 
 // ===== NAMA FILE BARU =====
-XLSX.writeFile(wb,"TABEL FIX.xlsx");
+const suffix=getSuffixPengajuan();
+
+XLSX.writeFile(
+wb,
+`TABEL FIX ${suffix}.xlsx`
+);
 
 }
 
@@ -962,7 +967,12 @@ let wb = XLSX.utils.book_new();
 XLSX.utils.book_append_sheet(wb,ws,"SELISIH");
 
 // ===== NAMA FILE BARU =====
-XLSX.writeFile(wb,"KANTONG WIN 4.xlsx");
+const suffix=getSuffixPengajuan();
+
+XLSX.writeFile(
+wb,
+`KANTONG ${suffix} WIN 4.xlsx`
+);
 
 }
 
@@ -1148,7 +1158,24 @@ ws["!cols"].push({wch:8});
 
 XLSX.utils.book_append_sheet(workbook,ws,"Pengajuan");
 
-XLSX.writeFile(workbook,"SPREADSHEET.xlsx");
+const suffix=getSuffixPengajuan();
+
+XLSX.writeFile(
+workbook,
+`SPREADSHEET ${suffix}.xlsx`
+);
+
+}
+
+function getSuffixPengajuan(){
+
+const text=document.getElementById("manualPengajuan").value.trim().toUpperCase();
+
+if(!text)return"";
+
+const hasil=text.replace(/^PENGAJUAN\s*/,"").trim();
+
+return hasil;
 
 }
 
