@@ -622,6 +622,10 @@ SPXID1234567892"></textarea>
 
 </div>
 
+<div style="display:flex;justify-content:center;margin-bottom:15px;">
+<input type="text" id="permohonan" placeholder="PERMOHONAN NO ???" style="width:260px;padding:15px;border:none;border-radius:15px;font-size:18px;font-weight:bold;text-align:center;outline:none;">
+</div>
+
 <div class="buttons">
 <button class="btn-primary" onclick="cekResi()">
 🔍 PROSES CEK
@@ -964,6 +968,14 @@ msg.style.display="block";
 
 async function exportExcel(){
 
+const permohonan=document.getElementById("permohonan").value.trim();
+
+if(permohonan==""){
+alert("Silahkan isi nomor PERMOHONAN terlebih dahulu!");
+document.getElementById("permohonan").focus();
+return;
+}
+
     if(hasilExport.length===0){
         alert("Belum ada hasil untuk diexport!");
         return;
@@ -1099,7 +1111,7 @@ async function exportExcel(){
                 type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             }
         ),
-        'Hasil_Cek_Resi.xlsx'
+        'Hasil_Cek_Resi '+permohonan+'.xlsx'
     );
 
 }
